@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_wardrobe — Hanger/closet icon for bottom navigation -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,2a3.5,3.5 0,0 0,-3.5 3.5c0,0.59 0.15,1.15 0.41,1.64L3,12l1.5,1.5L12,8.17l7.5,5.33L21,12l-5.91,-4.86c0.26,-0.49 0.41,-1.05 0.41,-1.64A3.5,3.5 0,0 0,12 2zM12,4.5a1,1 0,1 1,0 2,1 1,0 0,1 0,-2zM4,14v6h16v-6H4zM6,16h12v2H6v-2z" />
+</vector>

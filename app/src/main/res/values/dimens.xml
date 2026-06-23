@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    dimens.xml — Spacing and Sizing Tokens
+    Centralized dimension values for consistent spacing across the app.
+-->
+<resources>
+
+    <!-- Screen-level padding (content inset from edges) -->
+    <dimen name="screen_padding">16dp</dimen>
+
+    <!-- Card styling -->
+    <dimen name="card_corner_radius">12dp</dimen>
+    <dimen name="card_padding">12dp</dimen>
+
+    <!-- Grid spacing between wardrobe item cards -->
+    <dimen name="grid_spacing">8dp</dimen>
+
+    <!-- FAB margin from screen edges -->
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!-- Color picker circle size -->
+    <dimen name="color_circle_size">32dp</dimen>
+
+</resources>

@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    fragment_stylist.xml — Gesture-controlled Manual Fit Stylist Screen (Module 2)
+    Renders a paper-doll style mannequin silhouette with swipe/tap zones.
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://tools.android.com/tools"
+    android:id="@+id/coordinator_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <!-- Title Header -->
+        <TextView
+            android:id="@+id/text_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fit Stylist"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <TextView
+            android:id="@+id/text_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tap a section to select, swipe horizontally to browse."
+            android:textSize="13sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            app:layout_constraintTop_toBottomOf="@id/text_title"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- SLEEK MANNEQUIN GUIDE & LAYERS CONTAINER -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layout_mannequin_doll"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintDimensionRatio="1:2"
+            app:layout_constraintTop_toBottomOf="@id/text_subtitle"
+            app:layout_constraintBottom_toTopOf="@id/card_info_panel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginVertical="12dp">
+
+            <!-- Mannequin Background Symmetrical Guide -->
+            <ImageView
+                android:id="@+id/img_mannequin_base"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:alpha="0.25"
+                android:src="@drawable/ic_mannequin"
+                android:contentDescription="Mannequin silhouette guide"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- Proportional Division Guidelines (Head: 25%, Chest: 55%, Legs: 88%, Feet: 100%) -->
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_head_bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.25"/>
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_chest_bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.55"/>
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_legs_bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.88"/>
+
+            <!-- Clothing Layers -->
+            <!-- 1. Head Layer (Accessories) -->
+            <ImageView
+                android:id="@+id/img_layer_head"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Head Layer"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/guideline_head_bottom"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- 2. Chest Layer (Tops) -->
+            <ImageView
+                android:id="@+id/img_layer_chest"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Chest Layer"
+                app:layout_constraintTop_toBottomOf="@id/guideline_head_bottom"
+                app:layout_constraintBottom_toTopOf="@id/guideline_chest_bottom"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- 3. Legs Layer (Bottoms) -->
+            <ImageView
+                android:id="@+id/img_layer_legs"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Legs Layer"
+                app:layout_constraintTop_toBottomOf="@id/guideline_chest_bottom"
+                app:layout_constraintBottom_toTopOf="@id/guideline_legs_bottom"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- 4. Feet Layer (Shoes) -->
+            <ImageView
+                android:id="@+id/img_layer_feet"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Feet Layer"
+                app:layout_constraintTop_toBottomOf="@id/guideline_legs_bottom"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- INVISIBLE TOUCH SENSORS (Layered on top of image layers) -->
+            <View
+                android:id="@+id/touch_zone_head"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/guideline_head_bottom"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <View
+                android:id="@+id/touch_zone_chest"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintTop_toBottomOf="@id/guideline_head_bottom"
+                app:layout_constraintBottom_toTopOf="@id/guideline_chest_bottom"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <View
+                android:id="@+id/touch_zone_legs"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintTop_toBottomOf="@id/guideline_chest_bottom"
+                app:layout_constraintBottom_toTopOf="@id/guideline_legs_bottom"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <View
+                android:id="@+id/touch_zone_feet"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintTop_toBottomOf="@id/guideline_legs_bottom"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- PREMIUM GLASSMORPHIC ACTIVE ITEM INFO & CONTROLS PANEL -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_info_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="3dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Active Selection Details -->
+                <TextView
+                    android:id="@+id/text_active_layer_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Active Layer: None"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorSecondary"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:id="@+id/text_active_item_details"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tap on the mannequin to select an item"
+                    android:textSize="13sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Action Button Controls -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <!-- Reset Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_reset_canvas"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="6dp"
+                        android:text="Reset"
+                        app:cornerRadius="10dp"
+                        android:textColor="?attr/colorError"
+                        app:strokeColor="?attr/colorError" />
+
+                    <!-- Generate Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_generate_outfit"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1.5"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:text="Auto Outfit"
+                        app:cornerRadius="10dp"
+                        app:icon="@drawable/ic_stylist" />
+
+                    <!-- Wear Outfit Button (Visible when outfit exists) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_log_wear"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1.8"
+                        android:layout_marginStart="6dp"
+                        android:text="Wear Outfit"
+                        app:cornerRadius="10dp"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+                </LinearLayout>
+
+                <!-- Dynamic Weather Recommendation Alert -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_recommendation_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="?attr/colorPrimaryContainer"
+                    app:cardBackgroundColor="?attr/colorPrimaryContainer"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="4dp">
+
+                            <ImageView
+                                android:id="@+id/image_weather_icon"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_stylist"
+                                app:tint="?attr/colorOnPrimaryContainer"
+                                android:layout_marginEnd="6dp" />
+
+                            <TextView
+                                android:id="@+id/text_weather_info"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Weather: Loading..."
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnPrimaryContainer" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/text_recommendation_details"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Simulating styling suggestions..."
+                            android:textSize="11sp"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            android:alpha="0.85" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

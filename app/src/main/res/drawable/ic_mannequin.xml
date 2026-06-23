@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_mannequin — Realistic full-body mannequin silhouette for the Fit Stylist screen.
+     Proportions precisely aligned with the user-provided design reference.
+     Head/Hair   :  0%  – 25%  (y = 0 – 50)
+     Chest zone  : 25%  – 55%  (y = 50 – 110)
+     Legs zone   : 55%  – 88%  (y = 110 – 176)
+     Feet zone   : 88%  – 100% (y = 176 – 200)
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="200dp"
+    android:viewportWidth="100"
+    android:viewportHeight="200">
+
+    <!-- Mannequin Body Silhouette (Visible light grey #D5D5D7) -->
+    <path
+        android:fillColor="#D5D5D7"
+        android:pathData="M50,20 C58,20 60,28 58,35 C57,39 54,43 50,44 L53,44 L54,52 Q62,52 69,57 Q73,70 72,80 L71,106 C72,111 71,114 69.5,114 C68,114 68,110 68,106 L69,80 L66,64 Q66,75 63,85 Q61,95 64,106 Q64,130 62,148 Q61,170 60,192 L62,198 L54,198 L54,192 Q55,170 56,148 Q57,128 50,108 Q43,128 44,148 Q45,170 46,192 L46,198 L38,198 L40,192 Q39,170 38,148 Q36,130 36,106 Q39,95 37,85 Q34,75 34,64 L31,80 L32,106 C32,110 32,114 30.5,114 C29,114 28,111 29,106 L28,80 Q27,70 31,57 Q38,52 46,52 L47,44 C46,43 43,39 42,35 C40,28 42,20 50,20 Z" />
+
+    <!-- Styled Mannequin Hair (Dark charcoal #252527) -->
+    <path
+        android:fillColor="#252527"
+        android:pathData="M42,30 C40,20 45,14 48,12 C52,10 57,11 59,16 C60,19 60,25 58,30 C57,28 54,23 50,25 C46,26 44,28 42,30 Z" />
+
+</vector>

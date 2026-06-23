@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0C101B">
+
+    <!-- Scrollable content area -->
+    <ScrollView
+        android:id="@+id/scroll_analytics"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Premium App Bar / Header -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="28dp"
+                android:paddingBottom="20dp">
+
+                <!-- Two-Line Title -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Analytics"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dashboard"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:layout_marginTop="-4dp" />
+
+                </LinearLayout>
+
+                <!-- Top Right Buttons (Profile & Settings) -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true">
+
+                    <!-- Profile Button -->
+                    <ImageView
+                        android:id="@+id/btn_header_profile"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:src="@drawable/ic_person"
+                        android:contentDescription="Profile"
+                        android:layout_marginEnd="16dp"
+                        app:tint="#8A9AA4" />
+
+                    <!-- Settings Button -->
+                    <ImageView
+                        android:id="@+id/btn_header_settings"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:src="@drawable/ic_settings"
+                        android:contentDescription="Settings"
+                        app:tint="#8A9AA4" />
+
+                </LinearLayout>
+
+            </RelativeLayout>
+
+            <!-- ============================================================
+                 DATA CONTENT — Visible when wardrobe has items
+                 ============================================================ -->
+            <LinearLayout
+                android:id="@+id/layout_data_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <!-- ========================================================
+                     SUMMARY CARDS ROW — Total Items, Total Value, Avg CPW
+                     ======================================================== -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingTop="4dp"
+                    android:baselineAligned="false">
+
+                    <!-- Total Items Card (Glowing border) -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="4dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="1.5dp"
+                        app:strokeColor="#38B2AC"
+                        app:cardBackgroundColor="#121824">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <!-- Top row: Title + Icon -->
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Total\nItems"
+                                    android:textSize="11sp"
+                                    android:textColor="#8A9AA4"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true" />
+
+                                <ImageView
+                                    android:layout_width="26dp"
+                                    android:layout_height="26dp"
+                                    android:src="@drawable/ic_closet"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/bg_summary_icon_container"
+                                    android:padding="5dp"
+                                    app:tint="#38B2AC" />
+
+                            </RelativeLayout>
+
+                            <TextView
+                                android:id="@+id/text_total_items_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="42"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:layout_marginTop="8dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+5.2% vs Last Month"
+                                android:textSize="9sp"
+                                android:textColor="#38B2AC"
+                                android:layout_marginTop="6dp" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Total Value Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="4dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="#1A2436"
+                        app:cardBackgroundColor="#121824">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <!-- Top row: Title + Icon -->
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Total\nValue"
+                                    android:textSize="11sp"
+                                    android:textColor="#8A9AA4"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true" />
+
+                                <ImageView
+                                    android:layout_width="26dp"
+                                    android:layout_height="26dp"
+                                    android:src="@drawable/ic_dollar"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/bg_summary_icon_container"
+                                    android:padding="5dp"
+                                    app:tint="#38B2AC" />
+
+                            </RelativeLayout>
+
+                            <TextView
+                                android:id="@+id/text_total_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="$1,240"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:layout_marginTop="8dp"
+                                android:maxLines="1"
+                                android:ellipsize="end" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+5.2% vs Last Month"
+                                android:textSize="9sp"
+                                android:textColor="#38B2AC"
+                                android:layout_marginTop="6dp" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Average CPW Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="4dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="#1A2436"
+                        app:cardBackgroundColor="#121824">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <!-- Top row: Title + Icon -->
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Average\nCPW"
+                                    android:textSize="11sp"
+                                    android:textColor="#8A9AA4"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true" />
+
+                                <ImageView
+                                    android:layout_width="26dp"
+                                    android:layout_height="26dp"
+                                    android:src="@drawable/ic_tag"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/bg_summary_icon_container"
+                                    android:padding="5dp"
+                                    app:tint="#38B2AC" />
+
+                            </RelativeLayout>
+
+                            <TextView
+                                android:id="@+id/text_avg_cpw"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="$2.40"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:layout_marginTop="8dp"
+                                android:maxLines="1"
+                                android:ellipsize="end" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+5.2% vs Last Month"
+                                android:textSize="9sp"
+                                android:textColor="#38B2AC"
+                                android:layout_marginTop="6dp" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+                <!-- ========================================================
+                     CATEGORY DISTRIBUTION SECTION
+                     ======================================================== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Category Distribution"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="28dp"
+                    android:paddingBottom="12dp" />
+
+                <!-- Category Grid container (2 Columns) -->
+                <GridLayout
+                    android:id="@+id/grid_category_bars"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:alignmentMode="alignMargins"
+                    android:columnOrderPreserved="false"
+                    android:paddingHorizontal="12dp" />
+
+                <!-- ========================================================
+                     TABS SECTION: Most Worn Items / Least Worn Items
+                     ======================================================== -->
+                <LinearLayout
+                    android:id="@+id/layout_tab_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="28dp"
+                    android:paddingBottom="16dp">
+
+                    <!-- Tab 1: Most Worn -->
+                    <LinearLayout
+                        android:id="@+id/tab_most_worn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/text_tab_most_worn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Most Worn Items"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#38B2AC" />
+
+                        <View
+                            android:id="@+id/indicator_tab_most_worn"
+                            android:layout_width="match_parent"
+                            android:layout_height="2.5dp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginHorizontal="8dp"
+                            android:background="#38B2AC"
+                            android:visibility="visible" />
+
+                    </LinearLayout>
+
+                    <!-- Tab 2: Least Worn -->
+                    <LinearLayout
+                        android:id="@+id/tab_least_worn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/text_tab_least_worn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Least Worn Items"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#8A9AA4" />
+
+                        <View
+                            android:id="@+id/indicator_tab_least_worn"
+                            android:layout_width="match_parent"
+                            android:layout_height="2.5dp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginHorizontal="8dp"
+                            android:background="#38B2AC"
+                            android:visibility="invisible" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- List container for items (dynamically populated) -->
+                <LinearLayout
+                    android:id="@+id/layout_worn_items_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="24dp" />
+
+            </LinearLayout>
+
+            <!-- ============================================================
+                 EMPTY STATE — Shown when wardrobe is empty
+                 ============================================================ -->
+            <LinearLayout
+                android:id="@+id/layout_empty_state"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="@dimen/screen_padding"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/ic_analytics"
+                    android:alpha="0.4"
+                    android:contentDescription="@string/analytics_empty_title" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/analytics_empty_title"
+                    android:textSize="20sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/analytics_empty_message"
+                    android:textSize="14sp"
+                    android:textColor="#8A9AA4"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

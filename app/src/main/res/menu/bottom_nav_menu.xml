@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bottom_nav_menu.xml — Bottom Navigation Menu Items
+    Defines the 4 tabs: Wardrobe, Stylist, Analytics, Profile
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_wardrobe"
+        android:icon="@drawable/ic_wardrobe"
+        android:title="@string/nav_wardrobe" />
+
+    <item
+        android:id="@+id/nav_stylist"
+        android:icon="@drawable/ic_stylist"
+        android:title="@string/nav_stylist" />
+
+    <item
+        android:id="@+id/nav_analytics"
+        android:icon="@drawable/ic_analytics"
+        android:title="@string/nav_analytics" />
+
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_person"
+        android:title="@string/nav_profile" />
+
+</menu>
+

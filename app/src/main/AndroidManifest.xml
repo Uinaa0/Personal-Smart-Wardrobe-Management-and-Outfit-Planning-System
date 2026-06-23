@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================================
+    AndroidManifest.xml — Application Manifest
+    ============================================================================
+    This file declares the application's components (Activities, Services),
+    permissions, and metadata to the Android system.
+    ============================================================================
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ====================================================================
+         PERMISSIONS
+         ==================================================================== -->
+
+    <!-- INTERNET: Required for OpenWeatherMap API calls (Module 3) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- ACCESS_NETWORK_STATE: Check connectivity before making API calls -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- ACCESS_COARSE_LOCATION: Get approximate location for weather data -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- ACCESS_FINE_LOCATION: Get precise location for weather data -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- READ_MEDIA_IMAGES: Required on Android 13+ (API 33) to pick images
+         from the device gallery. Replaces READ_EXTERNAL_STORAGE. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- READ_EXTERNAL_STORAGE: Required on Android 12 and below to pick
+         images from the device gallery. -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- ====================================================================
+         APPLICATION CONFIGURATION
+         ==================================================================== -->
+    <application
+        android:name=".SmartWardrobeApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SmartWardrobe">
+
+        <!-- ================================================================
+             ACTIVITIES
+             ================================================================ -->
+
+        <!-- LoginActivity: The authentication entry point.
+             Redirects to MainActivity if the user is already logged in. -->
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- SignUpActivity: User registration form. -->
+        <activity
+            android:name=".ui.auth.SignUpActivity"
+            android:exported="false"
+            android:label="Create Account"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- MainActivity: The main entry point with bottom navigation
+             (Wardrobe / Stylist / Analytics / Profile tabs) -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="false"
+            android:label="@string/app_name" />
+
+        <!-- AddItemActivity: Form for adding a new wardrobe item
+             with image picker and metadata tagging -->
+        <activity
+            android:name=".ui.wardrobe.AddItemActivity"
+            android:exported="false"
+            android:label="@string/title_add_item"
+            android:parentActivityName=".ui.MainActivity" />
+
+    </application>
+</manifest>

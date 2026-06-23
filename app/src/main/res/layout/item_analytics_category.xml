@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/bg_category_card"
+    android:layout_margin="4dp">
+
+    <!-- Top Row: Icon + Name (left), Percentage (right) -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical">
+
+        <!-- Category Icon Container -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_category_icon_container"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            app:cardCornerRadius="8dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="#20373B">
+
+            <ImageView
+                android:id="@+id/image_category_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_tshirt"
+                app:tint="#38B2AC" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Category Name -->
+        <TextView
+            android:id="@+id/text_category_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/card_category_icon_container"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="8dp"
+            android:text="T-Shirts"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
+
+        <!-- Percentage -->
+        <TextView
+            android:id="@+id/text_category_percentage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="65%"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
+
+    </RelativeLayout>
+
+    <!-- Middle: Progress Bar Track and Filled Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_progress_track">
+
+        <!-- Fill -->
+        <View
+            android:id="@+id/view_progress_fill"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="65"
+            android:background="@drawable/bg_progress_fill" />
+
+        <!-- Empty space -->
+        <View
+            android:id="@+id/view_progress_empty"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="35" />
+
+    </LinearLayout>
+
+    <!-- Bottom Row: Color Code (left), Count (right) -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Color Hex Code -->
+        <TextView
+            android:id="@+id/text_category_color_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:text="#38B2AC"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#38B2AC" />
+
+        <!-- Item Count -->
+        <TextView
+            android:id="@+id/text_category_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:text="27"
+            android:textSize="12sp"
+            android:textColor="#8A9AA4" />
+
+    </RelativeLayout>
+
+</LinearLayout>

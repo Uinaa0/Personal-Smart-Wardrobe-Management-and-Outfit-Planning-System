@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_color_circle.xml — Single Color Circle for the Color Picker
+    Inflated programmatically in AddItemActivity for each color option.
+-->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="40dp"
+    android:layout_height="40dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:padding="4dp">
+
+    <!-- Color Circle — Background is a shape_color_dot drawable
+         tinted programmatically with the color hex value -->
+    <View
+        android:id="@+id/view_color_circle"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:background="@drawable/shape_color_dot" />
+
+    <!-- Check Mark — Visible when this color is selected -->
+    <View
+        android:id="@+id/view_check_mark"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:background="@drawable/ic_check_circle"
+        android:visibility="gone" />
+
+</FrameLayout>

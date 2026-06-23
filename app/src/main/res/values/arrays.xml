@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    arrays.xml — String Arrays for Spinner/Dropdown Options
+    These arrays populate the Category and Fabric Type dropdowns
+    in the Add Item form (AddItemActivity).
+-->
+<resources>
+
+    <!-- Clothing Categories
+         These must match the category strings used in the
+         StylingOntology.allowedCategories field for the Smart Stylist
+         (Module 3) to filter items correctly. -->
+    <string-array name="clothing_categories">
+        <item>T-Shirt</item>
+        <item>Shirt</item>
+        <item>Jacket</item>
+        <item>Hoodie</item>
+        <item>Sweater</item>
+        <item>Pants</item>
+        <item>Jeans</item>
+        <item>Shorts</item>
+        <item>Skirt</item>
+        <item>Dress</item>
+        <item>Shoes</item>
+        <item>Sneakers</item>
+        <item>Boots</item>
+        <item>Accessories</item>
+    </string-array>
+
+    <!-- Fabric Types
+         Used by the Smart Stylist (Module 3) for temperature-based
+         filtering. Heavy fabrics are excluded in hot weather. -->
+    <string-array name="fabric_types">
+        <item>Cotton</item>
+        <item>Polyester</item>
+        <item>Denim</item>
+        <item>Wool</item>
+        <item>Linen</item>
+        <item>Silk</item>
+        <item>Leather</item>
+        <item>Nylon</item>
+        <item>Fleece</item>
+        <item>Chiffon</item>
+        <item>Satin</item>
+        <item>Velvet</item>
+        <item>Suede</item>
+        <item>Canvas</item>
+        <item>Other</item>
+    </string-array>
+
+</resources>

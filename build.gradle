@@ -1,0 +1,20 @@
+// =============================================================================
+// build.gradle (Project-Level) — Root Build Configuration
+// =============================================================================
+// This is the top-level build file where you can add configuration options
+// common to all sub-projects/modules.
+//
+// The 'plugins' block declares which Gradle plugins are available to the
+// project. Using 'apply false' here means the plugin is NOT applied to the
+// root project itself — it's only made available for sub-modules to apply.
+// =============================================================================
+
+plugins {
+    // Android Gradle Plugin (AGP) 8.7.3
+    // This plugin enables Android-specific build features including:
+    // - APK/AAB packaging
+    // - Resource merging and AAPT2 compilation
+    // - ViewBinding code generation
+    // - Room annotation processing
+    id 'com.android.application' version '8.7.3' apply false
+}

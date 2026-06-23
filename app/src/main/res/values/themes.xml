@@ -1,0 +1,43 @@
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    themes.xml — Material Design 3 Theme Configuration
+    Defines the app's visual identity using Material3 design tokens.
+-->
+<resources>
+
+    <!-- Base application theme — Material Design 3 (DayNight) -->
+    <style name="Theme.SmartWardrobe" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- Primary color — Deep Indigo (fashion-forward, premium feel) -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+
+        <!-- Secondary color — Warm Rose (complementary accent) -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="colorSecondaryContainer">@color/secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+
+        <!-- Tertiary color — Soft Gold (for highlights and accents) -->
+        <item name="colorTertiary">@color/tertiary</item>
+        <item name="colorOnTertiary">@color/on_tertiary</item>
+
+        <!-- Surface colors -->
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+
+        <!-- Background -->
+        <item name="android:colorBackground">@color/surface</item>
+
+        <!-- Status bar -->
+        <item name="android:statusBarColor">@color/surface</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+    </style>
+
+</resources>

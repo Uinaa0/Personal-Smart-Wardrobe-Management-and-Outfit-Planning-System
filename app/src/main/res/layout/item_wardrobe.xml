@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_wardrobe.xml — Single Wardrobe Item Card (Grid Cell)
+    Displayed in the 2-column RecyclerView grid.
+    Each card shows: item image, category label, color indicator, fabric type.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/card_corner_radius"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerLow">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Item Image — Loaded from local storage via Glide
+             Uses centerCrop scaling to fill the card width.
+             The aspect ratio (4:5) provides a nice portrait display
+             for clothing items. -->
+        <ImageView
+            android:id="@+id/image_item"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:background="?attr/colorSurfaceContainerHighest"
+            android:contentDescription="@string/wardrobe_item_image"
+            tools:src="@drawable/ic_placeholder_clothing" />
+
+        <!-- Item Details Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/card_padding">
+
+            <!-- Row: Category Label + Color Indicator -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Category Label (e.g., "T-Shirt", "Jeans") -->
+                <TextView
+                    android:id="@+id/text_category"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    tools:text="T-Shirt" />
+
+                <!-- Color Indicator Dot — A small circle showing the item's
+                     color. The color is set programmatically in the adapter
+                     using the item's color_hex value. -->
+                <View
+                    android:id="@+id/view_color_indicator"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/shape_color_dot" />
+
+            </LinearLayout>
+
+            <!-- Fabric Type Label (e.g., "Cotton", "Denim") -->
+            <TextView
+                android:id="@+id/text_fabric_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Cotton" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

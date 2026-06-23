@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    strings.xml — All User-Facing Text Strings
+    Centralizing strings here enables easy localization (i18n).
+-->
+<resources>
+
+    <!-- App Name -->
+    <string name="app_name">Smart Wardrobe</string>
+
+    <!-- ====================================================================
+         Bottom Navigation
+         ==================================================================== -->
+    <string name="nav_wardrobe">Wardrobe</string>
+    <string name="nav_stylist">Stylist</string>
+    <string name="nav_analytics">Analytics</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- ====================================================================
+         Module 1: Wardrobe Screen
+         ==================================================================== -->
+    <string name="title_wardrobe">My Wardrobe</string>
+    <string name="add_item">Add Item</string>
+    <string name="filter_all">All</string>
+    <string name="wardrobe_item_image">Wardrobe item image</string>
+
+    <!-- Empty State -->
+    <string name="empty_wardrobe">Empty wardrobe</string>
+    <string name="empty_wardrobe_title">Your wardrobe is empty</string>
+    <string name="empty_wardrobe_message">Tap the + button to add your first clothing item and start building your digital wardrobe!</string>
+
+    <!-- ====================================================================
+         Add Item Form
+         ==================================================================== -->
+    <string name="title_add_item">Add to Wardrobe</string>
+    <string name="label_photo">Photo</string>
+    <string name="hint_photo">Use a transparent background (.PNG) for best outfit layering</string>
+    <string name="tap_to_add_photo">Tap to select a photo</string>
+    <string name="add_photo">Add photo</string>
+    <string name="selected_image">Selected image</string>
+
+    <string name="label_category">Category</string>
+    <string name="label_fabric">Fabric Type</string>
+    <string name="label_color">Color</string>
+    <string name="label_price">Purchase Price</string>
+
+    <string name="button_save_item">Save to Wardrobe</string>
+
+    <!-- ====================================================================
+         Dialogs
+         ==================================================================== -->
+    <string name="dialog_delete_title">Delete Item</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_delete">Delete</string>
+
+    <!-- ====================================================================
+         Module 4: Analytics Dashboard
+         ==================================================================== -->
+    <string name="title_analytics">Analytics</string>
+    <string name="analytics_total_items">Total Items</string>
+    <string name="analytics_total_value">Total Value</string>
+    <string name="analytics_avg_cpw">Avg. CPW</string>
+    <string name="analytics_category_distribution">Category Distribution</string>
+    <string name="analytics_most_worn">Most Worn Items</string>
+    <string name="analytics_least_worn">Least Worn Items</string>
+    <string name="analytics_wear_count">%d wears</string>
+    <string name="analytics_cpw_label">CPW: RM%.2f</string>
+    <string name="analytics_price_format">RM%.2f</string>
+    <string name="analytics_never_worn">Never worn</string>
+    <string name="analytics_item_thumbnail">Item thumbnail</string>
+
+    <!-- Analytics Empty State -->
+    <string name="analytics_empty_title">No analytics yet</string>
+    <string name="analytics_empty_message">Add items to your wardrobe and start wearing them to see insights and Cost-Per-Wear metrics here!</string>
+
+</resources>

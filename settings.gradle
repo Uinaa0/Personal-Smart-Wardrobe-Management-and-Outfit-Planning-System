@@ -1,0 +1,44 @@
+// =============================================================================
+// settings.gradle — Project-Level Gradle Settings
+// =============================================================================
+// This file configures where Gradle should look for plugins and dependencies.
+// It uses the modern "pluginManagement" and "dependencyResolutionManagement"
+// blocks (introduced in Gradle 7.0+) for centralized repository configuration.
+// =============================================================================
+
+pluginManagement {
+    repositories {
+        // Google's Maven repository — hosts Android Gradle Plugin (AGP),
+        // AndroidX libraries, and other Google-published artifacts.
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        // Maven Central — the primary repository for open-source Java/Android
+        // libraries (RxJava, Retrofit, OkHttp, Glide, Gson, etc.)
+        mavenCentral()
+        // Gradle Plugin Portal — hosts Gradle plugins.
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    // FAIL_ON_PROJECT_REPOS ensures all repositories are declared here
+    // (in settings.gradle) rather than in individual module build.gradle files.
+    // This enforces a single source of truth for dependency resolution.
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// The display name of the root project.
+rootProject.name = "SmartWardrobe"
+
+// Include the 'app' module. In a multi-module project, additional modules
+// (e.g., ':data', ':domain') would be listed here as well.
+include ':app'

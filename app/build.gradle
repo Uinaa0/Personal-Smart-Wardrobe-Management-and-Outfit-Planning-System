@@ -1,0 +1,231 @@
+// =============================================================================
+// build.gradle (Module: app) — Application Module Build Configuration
+// =============================================================================
+// This file configures the build settings and dependencies for the main
+// application module of the Smart Wardrobe Management System.
+//
+// TECHNICAL STACK (as defined in the FYP specification):
+// - Frontend:     Native Android XML, Material Design 3, ViewBinding
+// - Backend:      Native Java, MVVM Architecture, Repository Pattern
+// - Async:        RxJava 3 (Reactive Extensions)
+// - Database:     Room Persistence Library (SQLite abstraction)
+// - Networking:   Retrofit 2 + OkHttp 3 (for OpenWeatherMap API)
+// - Image Loading: Glide (with transparent PNG support)
+// =============================================================================
+
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    // The unique namespace for this application's generated R class and BuildConfig.
+    namespace 'com.aiman.smartwardrobe'
+
+    // compileSdk 35 (Android 15) — The SDK version used to compile the app.
+    // This determines which Android APIs are available at compile time.
+    compileSdk 35
+
+    defaultConfig {
+        // The unique application identifier on Google Play Store.
+        applicationId "com.aiman.smartwardrobe"
+
+        // minSdk 26 (Android 8.0 Oreo) — The minimum Android version supported.
+        // API 26 covers ~95% of active devices and provides:
+        // - Adaptive icons, Notification channels, Autofill framework
+        minSdk 26
+
+        // targetSdk 35 — The SDK version the app is designed and tested against.
+        targetSdk 35
+
+        // Version tracking for release management.
+        versionCode 1
+        versionName "1.0"
+
+        // JUnit test runner for instrumented (on-device) tests.
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            // ProGuard/R8 code shrinking is disabled for development.
+            // Enable this for production builds to reduce APK size.
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        // Java 17 language features (sealed classes, pattern matching, etc.)
+        // Required by the latest versions of AndroidX and Room.
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        // ViewBinding generates a binding class for each XML layout file.
+        // This eliminates the need for findViewById() calls and provides
+        // compile-time safety for view references.
+        // Example: ActivityMainBinding is auto-generated for activity_main.xml
+        viewBinding true
+    }
+}
+
+dependencies {
+
+    // =========================================================================
+    // ANDROIDX CORE LIBRARIES
+    // =========================================================================
+    // AppCompat — Provides backward-compatible versions of Android framework
+    // APIs (ActionBar, Toolbar, themes) for older Android versions.
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+
+    // ConstraintLayout — A flexible layout manager that allows creating
+    // complex layouts with a flat view hierarchy (better performance than
+    // nested LinearLayouts).
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // Fragment — AndroidX Fragment library with lifecycle-aware components.
+    // Used for the tabbed navigation (Wardrobe, Stylist, Analytics fragments).
+    implementation 'androidx.fragment:fragment:1.8.5'
+
+    // Activity — AndroidX Activity library with ActivityResult APIs.
+    implementation 'androidx.activity:activity:1.9.3'
+
+    // =========================================================================
+    // MATERIAL DESIGN 3
+    // =========================================================================
+    // Google's Material Design 3 component library for Android.
+    // Provides modern, themed UI components including:
+    // - MaterialCardView (wardrobe item cards)
+    // - BottomNavigationView (main navigation)
+    // - FloatingActionButton (add item button)
+    // - TextInputLayout (form fields with floating labels)
+    // - MaterialToolbar (app bars)
+    // - Chip & ChipGroup (category filters)
+    implementation 'com.google.android.material:material:1.12.0'
+
+    // =========================================================================
+    // ROOM PERSISTENCE LIBRARY (SQLite Abstraction Layer)
+    // =========================================================================
+    // Room provides an abstraction layer over SQLite, allowing fluent
+    // database access while leveraging the full power of SQLite.
+    //
+    // Architecture: @Entity -> @Dao -> @Database
+    //
+    // room-runtime: Core Room runtime — handles entity mapping, query
+    //               execution, and database lifecycle management.
+    implementation 'androidx.room:room-runtime:2.6.1'
+
+    // room-rxjava3: RxJava 3 integration for Room.
+    //               Enables DAO methods to return RxJava types:
+    //               - Flowable<List<T>> for observable queries
+    //               - Single<T> for one-shot queries
+    //               - Completable for write operations
+    implementation 'androidx.room:room-rxjava3:2.6.1'
+
+    // room-compiler: Annotation processor that generates the DAO
+    //                implementation code at compile time. This reads
+    //                @Entity, @Dao, and @Database annotations and produces
+    //                the concrete Java classes that Room uses at runtime.
+    //                NOTE: Uses 'annotationProcessor' (not 'kapt') because
+    //                this project uses Java, not Kotlin.
+    annotationProcessor 'androidx.room:room-compiler:2.6.1'
+
+    // =========================================================================
+    // RXJAVA 3 — Reactive Extensions for Java
+    // =========================================================================
+    // RxJava provides a composable, declarative API for asynchronous
+    // programming using observable streams. In this project, RxJava is used
+    // for all async operations: database queries, API calls, and data
+    // transformations.
+    //
+    // Key types used:
+    // - Flowable: Backpressure-aware stream (for Room's observable queries)
+    // - Single: Emits exactly one value or an error
+    // - Completable: Signals completion without a value (for writes)
+    // - Observable: Standard stream without backpressure
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.8'
+
+    // RxAndroid provides Android-specific schedulers, primarily:
+    // AndroidSchedulers.mainThread() — Posts results to the UI thread.
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
+
+    // =========================================================================
+    // RETROFIT 2 + OKHTTP 3 — HTTP Client for REST APIs
+    // =========================================================================
+    // Retrofit is a type-safe HTTP client that turns REST API definitions
+    // into Java interfaces. Used in Module 3 to call the OpenWeatherMap API
+    // for real-time weather data.
+    //
+    // retrofit: Core library — defines API interfaces with annotations
+    //           (@GET, @Query, @Path, etc.)
+    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
+
+    // converter-gson: Converts JSON responses to Java objects using Gson.
+    //                 Example: OpenWeatherMap's JSON -> WeatherResponse POJO
+    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
+
+    // adapter-rxjava3: Converts Retrofit Call objects to RxJava3 types.
+    //                  Enables: @GET("weather") Single<WeatherResponse>
+    implementation 'com.squareup.retrofit2:adapter-rxjava3:2.11.0'
+
+    // OkHttp: The underlying HTTP engine used by Retrofit.
+    //         Handles connection pooling, caching, and request/response
+    //         interception.
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    // Logging Interceptor: Logs HTTP request/response details for debugging.
+    //                      Shows URL, headers, body, and timing information
+    //                      in Logcat during development.
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+
+    // =========================================================================
+    // GLIDE — Image Loading & Caching Library
+    // =========================================================================
+    // Glide handles efficient loading, caching, and display of images.
+    // Key features used in this project:
+    // - Loading images from local file URIs (wardrobe item photos)
+    // - Transparent PNG support for the outfit layering canvas (Module 2)
+    // - Automatic memory and disk caching for smooth scrolling
+    // - Placeholder and error image handling
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+
+    // Glide's annotation processor generates the GlideApp API and
+    // custom module configuration at compile time.
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
+
+    // =========================================================================
+    // LIFECYCLE COMPONENTS (Android Architecture Components)
+    // =========================================================================
+    // Part of the MVVM (Model-View-ViewModel) architecture pattern.
+    //
+    // lifecycle-viewmodel: ViewModel survives configuration changes
+    //                      (e.g., screen rotation) and holds UI-related data.
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
+
+    // lifecycle-livedata: LiveData is a lifecycle-aware observable data holder.
+    //                     The UI (Fragment/Activity) observes LiveData objects
+    //                     and automatically updates when data changes.
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.8.7'
+
+    // =========================================================================
+    // GOOGLE GSON — JSON Serialization/Deserialization
+    // =========================================================================
+    // Used for:
+    // 1. Storing complex objects as JSON strings in Room
+    //    (e.g., user preferences, allowed categories)
+    // 2. Parsing OpenWeatherMap API responses (via Retrofit's converter-gson)
+    implementation 'com.google.code.gson:gson:2.11.0'
+
+    // =========================================================================
+    // TESTING DEPENDENCIES
+    // =========================================================================
+    // JUnit 4 — Unit testing framework for local (JVM) tests.
+    testImplementation 'junit:junit:4.13.2'
+
+    // AndroidX Test — JUnit extensions for Android instrumented tests.
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+
+    // Espresso — UI testing framework for Android.
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+}
