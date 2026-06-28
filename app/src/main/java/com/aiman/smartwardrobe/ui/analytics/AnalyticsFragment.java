@@ -121,13 +121,13 @@ public class AnalyticsFragment extends Fragment {
 
     private void updateTabStyles() {
         if (isMostWornTabSelected) {
-            binding.textTabMostWorn.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+            binding.textTabMostWorn.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary));
             binding.indicatorTabMostWorn.setVisibility(View.VISIBLE);
 
             binding.textTabLeastWorn.setTextColor(ColorUtils.parseHexColor("#8A9AA4"));
             binding.indicatorTabLeastWorn.setVisibility(View.INVISIBLE);
         } else {
-            binding.textTabLeastWorn.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+            binding.textTabLeastWorn.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary));
             binding.indicatorTabLeastWorn.setVisibility(View.VISIBLE);
 
             binding.textTabMostWorn.setTextColor(ColorUtils.parseHexColor("#8A9AA4"));

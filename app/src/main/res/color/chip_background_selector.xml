@@ -3,4 +3,10 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:color="@color/chip_background_selected" android:state_checked="true" />
     <item android:color="@color/chip_background_default" />
+    <!-- Add this line -->
+    <color name="colorPrimary">#6750A4</color> 
+
+    <!-- You likely already have these -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
 </selector>
