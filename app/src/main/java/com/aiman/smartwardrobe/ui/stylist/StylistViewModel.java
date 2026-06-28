@@ -29,10 +29,12 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * StylistViewModel — MVVM ViewModel for the Manual Fit Stylist Screen
  * ============================================================================
  *
- * <p>Manages the selection state of the wardrobe items (Top, Bottom, Shoes)
+ * <p>
+ * Manages the selection state of the wardrobe items (Top, Bottom, Shoes)
  * currently loaded onto the canvas. Coordinates fetching filtered list options,
  * logs wear events to Room, fetches current local weather from OpenWeatherMap,
- * and executes the automated Smart Stylist outfit generator algorithm.</p>
+ * and executes the automated Smart Stylist outfit generator algorithm.
+ * </p>
  *
  * @author Aiman — Final Year Project
  * @version 1.0
@@ -48,9 +50,9 @@ public class StylistViewModel extends AndroidViewModel {
 
     // Selection States
     private final MutableLiveData<WardrobeItem> selectedHead = new MutableLiveData<>(null);
-    private final MutableLiveData<WardrobeItem> selectedTop = new MutableLiveData<>(null);     // Maps to CHEST
-    private final MutableLiveData<WardrobeItem> selectedBottom = new MutableLiveData<>(null);  // Maps to LEGS
-    private final MutableLiveData<WardrobeItem> selectedShoes = new MutableLiveData<>(null);   // Maps to FEET
+    private final MutableLiveData<WardrobeItem> selectedTop = new MutableLiveData<>(null); // Maps to CHEST
+    private final MutableLiveData<WardrobeItem> selectedBottom = new MutableLiveData<>(null); // Maps to LEGS
+    private final MutableLiveData<WardrobeItem> selectedShoes = new MutableLiveData<>(null); // Maps to FEET
 
     // Active Layer State
     private final MutableLiveData<String> activeLayerName = new MutableLiveData<>("None");
@@ -62,14 +64,11 @@ public class StylistViewModel extends AndroidViewModel {
 
     // Predefined category groups matching strings in arrays.xml
     public static final List<String> CATEGORIES_TOP = Arrays.asList(
-            "T-Shirt", "Shirt", "Jacket", "Hoodie", "Sweater"
-    );
+            "T-Shirt", "Shirt", "Jacket", "Hoodie", "Sweater");
     public static final List<String> CATEGORIES_BOTTOM = Arrays.asList(
-            "Pants", "Jeans", "Shorts", "Skirt", "Dress"
-    );
+            "Pants", "Jeans", "Shorts", "Skirt", "Dress");
     public static final List<String> CATEGORIES_SHOES = Arrays.asList(
-            "Shoes", "Sneakers", "Boots"
-    );
+            "Shoes", "Sneakers", "Boots");
 
     // Lists of items loaded from the database for swipe navigation
     private List<WardrobeItem> headItems = new ArrayList<>();
@@ -137,7 +136,8 @@ public class StylistViewModel extends AndroidViewModel {
     }
 
     private int findItemIndex(List<WardrobeItem> list, WardrobeItem target) {
-        if (target == null || list == null) return -1;
+        if (target == null || list == null)
+            return -1;
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i).getItemId() == target.getItemId()) {
                 return i;
@@ -237,28 +237,36 @@ public class StylistViewModel extends AndroidViewModel {
         setActiveLayer(slot);
         switch (slot) {
             case HEAD:
-                if (headItems.isEmpty()) return;
+                if (headItems.isEmpty())
+                    return;
                 // Cycle: -1 (empty) -> 0 -> 1 -> ... -> size-1 -> -1 (empty)
                 headIndex = headIndex + 1;
-                if (headIndex >= headItems.size()) headIndex = -1;
+                if (headIndex >= headItems.size())
+                    headIndex = -1;
                 selectedHead.setValue(headIndex >= 0 ? headItems.get(headIndex) : null);
                 break;
             case CHEST:
-                if (chestItems.isEmpty()) return;
+                if (chestItems.isEmpty())
+                    return;
                 chestIndex = chestIndex + 1;
-                if (chestIndex >= chestItems.size()) chestIndex = -1;
+                if (chestIndex >= chestItems.size())
+                    chestIndex = -1;
                 selectedTop.setValue(chestIndex >= 0 ? chestItems.get(chestIndex) : null);
                 break;
             case LEGS:
-                if (legsItems.isEmpty()) return;
+                if (legsItems.isEmpty())
+                    return;
                 legsIndex = legsIndex + 1;
-                if (legsIndex >= legsItems.size()) legsIndex = -1;
+                if (legsIndex >= legsItems.size())
+                    legsIndex = -1;
                 selectedBottom.setValue(legsIndex >= 0 ? legsItems.get(legsIndex) : null);
                 break;
             case FEET:
-                if (feetItems.isEmpty()) return;
+                if (feetItems.isEmpty())
+                    return;
                 feetIndex = feetIndex + 1;
-                if (feetIndex >= feetItems.size()) feetIndex = -1;
+                if (feetIndex >= feetItems.size())
+                    feetIndex = -1;
                 selectedShoes.setValue(feetIndex >= 0 ? feetItems.get(feetIndex) : null);
                 break;
         }
@@ -268,28 +276,36 @@ public class StylistViewModel extends AndroidViewModel {
         setActiveLayer(slot);
         switch (slot) {
             case HEAD:
-                if (headItems.isEmpty()) return;
+                if (headItems.isEmpty())
+                    return;
                 // Cycle: -1 (empty) <- 0 <- 1 <- ... <- size-1 <- -1 (empty)
                 headIndex = headIndex - 1;
-                if (headIndex < -1) headIndex = headItems.size() - 1;
+                if (headIndex < -1)
+                    headIndex = headItems.size() - 1;
                 selectedHead.setValue(headIndex >= 0 ? headItems.get(headIndex) : null);
                 break;
             case CHEST:
-                if (chestItems.isEmpty()) return;
+                if (chestItems.isEmpty())
+                    return;
                 chestIndex = chestIndex - 1;
-                if (chestIndex < -1) chestIndex = chestItems.size() - 1;
+                if (chestIndex < -1)
+                    chestIndex = chestItems.size() - 1;
                 selectedTop.setValue(chestIndex >= 0 ? chestItems.get(chestIndex) : null);
                 break;
             case LEGS:
-                if (legsItems.isEmpty()) return;
+                if (legsItems.isEmpty())
+                    return;
                 legsIndex = legsIndex - 1;
-                if (legsIndex < -1) legsIndex = legsItems.size() - 1;
+                if (legsIndex < -1)
+                    legsIndex = legsItems.size() - 1;
                 selectedBottom.setValue(legsIndex >= 0 ? legsItems.get(legsIndex) : null);
                 break;
             case FEET:
-                if (feetItems.isEmpty()) return;
+                if (feetItems.isEmpty())
+                    return;
                 feetIndex = feetIndex - 1;
-                if (feetIndex < -1) feetIndex = feetItems.size() - 1;
+                if (feetIndex < -1)
+                    feetIndex = feetItems.size() - 1;
                 selectedShoes.setValue(feetIndex >= 0 ? feetItems.get(feetIndex) : null);
                 break;
         }
@@ -319,8 +335,10 @@ public class StylistViewModel extends AndroidViewModel {
     }
 
     /**
-     * Fetch wardrobe items belonging to the category group associated with a SlotType.
-     * Room's Flowable ensures real-time updates to the Bottom Sheet list if database changes.
+     * Fetch wardrobe items belonging to the category group associated with a
+     * SlotType.
+     * Room's Flowable ensures real-time updates to the Bottom Sheet list if
+     * database changes.
      */
     public Flowable<List<WardrobeItem>> getClothingOptions(SlotType slot) {
         List<String> targetCategories;
@@ -408,7 +426,8 @@ public class StylistViewModel extends AndroidViewModel {
      * 2. Resolves list of weather-appropriate categories.
      * 3. Queries matching database wardrobe items.
      * 4. Excludes items worn in the last 3 days.
-     * 5. Partitions options and selects one random item per slot, falling back as needed.
+     * 5. Partitions options and selects one random item per slot, falling back as
+     * needed.
      * 6. Posts results to selected item LiveDatas.
      *
      * @param temperature The temperature in Celsius to filter rules by
@@ -425,20 +444,25 @@ public class StylistViewModel extends AndroidViewModel {
                 repository.getRecentlyWornItemIds(3),
                 repository.getItemsByCategoriesSingle(allPossibleCategories),
                 (rules, recentlyWornIds, dbItems) -> {
-                    // 1. Filter matching rules to find the most specific ones for this temperature range
-                    // to prevent overlapping categories (e.g. Winter rule and Casual Hot rule unioning at 10°C).
+                    // 1. Filter matching rules to find the most specific ones for this temperature
+                    // range
+                    // to prevent overlapping categories (e.g. Winter rule and Casual Hot rule
+                    // unioning at 10°C).
                     List<com.aiman.smartwardrobe.data.entity.StylingOntology> activeRules = new ArrayList<>();
                     com.aiman.smartwardrobe.data.entity.StylingOntology bestCasualRule = null;
                     com.aiman.smartwardrobe.data.entity.StylingOntology bestFormalRule = null;
 
                     for (com.aiman.smartwardrobe.data.entity.StylingOntology rule : rules) {
                         String code = rule.getDressCode().toLowerCase();
-                        if (code.contains("casual") || code.contains("winter") || code.contains("cool") || code.contains("warm") || code.contains("hot")) {
-                            if (bestCasualRule == null || rule.getMaxTemperature() < bestCasualRule.getMaxTemperature()) {
+                        if (code.contains("casual") || code.contains("winter") || code.contains("cool")
+                                || code.contains("warm") || code.contains("hot")) {
+                            if (bestCasualRule == null
+                                    || rule.getMaxTemperature() < bestCasualRule.getMaxTemperature()) {
                                 bestCasualRule = rule;
                             }
                         } else if (code.contains("formal")) {
-                            if (bestFormalRule == null || rule.getMaxTemperature() < bestFormalRule.getMaxTemperature()) {
+                            if (bestFormalRule == null
+                                    || rule.getMaxTemperature() < bestFormalRule.getMaxTemperature()) {
                                 bestFormalRule = rule;
                             }
                         }
@@ -526,7 +550,8 @@ public class StylistViewModel extends AndroidViewModel {
 
                     // Track fallback details for the user notification/alert text
                     StringBuilder sb = new StringBuilder();
-                    sb.append("Outfit generated for ").append(String.format(java.util.Locale.US, "%.1f", temperature)).append("°C.\n");
+                    sb.append("Outfit generated for ").append(String.format(java.util.Locale.US, "%.1f", temperature))
+                            .append("°C.\n");
                     sb.append("Allowed Categories: ").append(String.join(", ", allowedCats)).append(".\n\n");
 
                     appendStatus(sb, "Top", freshAllowedTops, allowedTops, dbTops, top);
@@ -534,26 +559,26 @@ public class StylistViewModel extends AndroidViewModel {
                     appendStatus(sb, "Shoes", freshAllowedShoes, allowedShoes, dbShoes, shoes);
 
                     return new RecommendationResult(top, bottom, shoes, sb.toString());
-                }
-        )
-        .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
-        .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
-        .subscribe(
-                result -> {
-                    selectedTop.setValue(result.top);
-                    selectedBottom.setValue(result.bottom);
-                    selectedShoes.setValue(result.shoes);
-                    recommendationAlert.setValue(result.alertText);
-                },
-                throwable -> {
-                    throwable.printStackTrace();
-                    recommendationAlert.setValue("Failed to generate recommendation: " + throwable.getMessage());
-                }
-        );
+                })
+                .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                .subscribe(
+                        result -> {
+                            selectedTop.setValue(result.top);
+                            selectedBottom.setValue(result.bottom);
+                            selectedShoes.setValue(result.shoes);
+                            recommendationAlert.setValue(result.alertText);
+                        },
+                        throwable -> {
+                            throwable.printStackTrace();
+                            recommendationAlert
+                                    .setValue("Failed to generate recommendation: " + throwable.getMessage());
+                        });
         compositeDisposable.add(disposable);
     }
 
-    private WardrobeItem selectRandomItem(List<WardrobeItem> fresh, List<WardrobeItem> allowed, List<WardrobeItem> allDb, java.util.Random random) {
+    private WardrobeItem selectRandomItem(List<WardrobeItem> fresh, List<WardrobeItem> allowed,
+            List<WardrobeItem> allDb, java.util.Random random) {
         if (!fresh.isEmpty()) {
             return fresh.get(random.nextInt(fresh.size()));
         } else if (!allowed.isEmpty()) {
@@ -564,7 +589,8 @@ public class StylistViewModel extends AndroidViewModel {
         return null;
     }
 
-    private void appendStatus(StringBuilder sb, String slotName, List<WardrobeItem> fresh, List<WardrobeItem> allowed, List<WardrobeItem> allDb, WardrobeItem selected) {
+    private void appendStatus(StringBuilder sb, String slotName, List<WardrobeItem> fresh, List<WardrobeItem> allowed,
+            List<WardrobeItem> allDb, WardrobeItem selected) {
         sb.append(slotName).append(": ");
         if (selected == null) {
             sb.append("None available in DB");

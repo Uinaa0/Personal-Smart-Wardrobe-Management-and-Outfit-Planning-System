@@ -35,10 +35,13 @@ import io.reactivex.rxjava3.disposables.Disposable;
  * StylistFragment — Module 2: The Direct Gesture-Controlled dressing room
  * ============================================================================
  *
- * <p>Implements the paper-doll dressing room canvas. Renders overlapping transparent
+ * <p>
+ * Implements the paper-doll dressing room canvas. Renders overlapping
+ * transparent
  * PNGs for Head, Chest, Legs, and Feet. Uses GestureDetectorCompat on invisible
  * touch zones to handle single tap (select first item) and horizontal swipes
- * (cycle previous/next items) directly on the mannequin.</p>
+ * (cycle previous/next items) directly on the mannequin.
+ * </p>
  *
  * @author Aiman — Final Year Project
  * @version 2.0
@@ -55,8 +58,8 @@ public class StylistFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         binding = FragmentStylistBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -86,7 +89,8 @@ public class StylistFragment extends Fragment {
     }
 
     private void setupSlotListeners() {
-        // Attach direct swipe/tap gesture listeners to each of the 4 invisible touch zones
+        // Attach direct swipe/tap gesture listeners to each of the 4 invisible touch
+        // zones
         binding.touchZoneHead.setOnTouchListener(new MannequinTouchListener(StylistViewModel.SlotType.HEAD));
         binding.touchZoneChest.setOnTouchListener(new MannequinTouchListener(StylistViewModel.SlotType.CHEST));
         binding.touchZoneLegs.setOnTouchListener(new MannequinTouchListener(StylistViewModel.SlotType.LEGS));
@@ -107,7 +111,8 @@ public class StylistFragment extends Fragment {
             }
             new MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Confirm Outfit")
-                    .setMessage("Log this outfit combination to your wear history? This updates your Cost-Per-Wear analytics.")
+                    .setMessage(
+                            "Log this outfit combination to your wear history? This updates your Cost-Per-Wear analytics.")
                     .setNegativeButton("Cancel", null)
                     .setPositiveButton("Log Wear", (dialog, which) -> saveWearHistory())
                     .show();
@@ -131,8 +136,7 @@ public class StylistFragment extends Fragment {
                                     "Error saving wear: " + throwable.getMessage(),
                                     Toast.LENGTH_SHORT).show();
                             throwable.printStackTrace();
-                        }
-                );
+                        });
         compositeDisposable.add(disposable);
     }
 
@@ -197,7 +201,8 @@ public class StylistFragment extends Fragment {
     }
 
     /**
-     * Updates the text labels in the bottom info card depending on which layer is currently active
+     * Updates the text labels in the bottom info card depending on which layer is
+     * currently active
      * and what clothing item is loaded onto it.
      */
     private void updateInfoPanelText() {
@@ -222,7 +227,8 @@ public class StylistFragment extends Fragment {
         }
 
         if (currentItem != null) {
-            String details = currentItem.getCategory() + " (" + currentItem.getFabricType() + " • $" + String.format(java.util.Locale.US, "%.2f", currentItem.getPurchasePrice()) + ")";
+            String details = currentItem.getCategory() + " (" + currentItem.getFabricType() + " • $"
+                    + String.format(java.util.Locale.US, "%.2f", currentItem.getPurchasePrice()) + ")";
             binding.textActiveItemDetails.setText(details);
         } else {
             binding.textActiveItemDetails.setText("Empty • Swipe horizontally to browse options");
@@ -237,31 +243,32 @@ public class StylistFragment extends Fragment {
                     .listener(new com.bumptech.glide.request.RequestListener<android.graphics.Bitmap>() {
                         @Override
                         public boolean onLoadFailed(@Nullable com.bumptech.glide.load.engine.GlideException e,
-                                                    Object model, com.bumptech.glide.request.target.Target<android.graphics.Bitmap> target,
-                                                    boolean isFirstResource) {
+                                Object model, com.bumptech.glide.request.target.Target<android.graphics.Bitmap> target,
+                                boolean isFirstResource) {
                             layerView.setImageDrawable(null);
                             return false;
                         }
 
                         @Override
                         public boolean onResourceReady(android.graphics.Bitmap resource, Object model,
-                                                       com.bumptech.glide.request.target.Target<android.graphics.Bitmap> target,
-                                                       com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
+                                com.bumptech.glide.request.target.Target<android.graphics.Bitmap> target,
+                                com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
                             return false;
                         }
                     })
                     .into(new com.bumptech.glide.request.target.CustomTarget<android.graphics.Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull android.graphics.Bitmap resource,
-                                                    @Nullable com.bumptech.glide.request.transition.Transition<? super android.graphics.Bitmap> transition) {
+                                @Nullable com.bumptech.glide.request.transition.Transition<? super android.graphics.Bitmap> transition) {
                             if (compositeDisposable != null) {
-                                Disposable d = io.reactivex.rxjava3.core.Single.fromCallable(() -> removeWhiteBackground(resource))
+                                Disposable d = io.reactivex.rxjava3.core.Single
+                                        .fromCallable(() -> removeWhiteBackground(resource))
                                         .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.computation())
-                                        .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                                        .observeOn(
+                                                io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
                                         .subscribe(
                                                 processed -> layerView.setImageBitmap(processed),
-                                                throwable -> layerView.setImageBitmap(resource)
-                                        );
+                                                throwable -> layerView.setImageBitmap(resource));
                                 compositeDisposable.add(d);
                             } else {
                                 layerView.setImageBitmap(resource);
@@ -280,18 +287,23 @@ public class StylistFragment extends Fragment {
     }
 
     /**
-     * Programmatically removes white/off-white/light-gray backgrounds from a Bitmap.
-     * Uses a 3-phase approach for clean, artifact-free results:
+     * Programmatically removes white/near-white backgrounds from a Bitmap.
+     * Uses a conservative 3-phase approach:
      * <ol>
-     *   <li>BFS flood fill from border pixels (8-directional) to identify background regions</li>
-     *   <li>Clear all identified background pixels to transparent</li>
-     *   <li>Edge feathering to smooth the transition between clothing and removed background</li>
+     * <li>BFS flood fill from border pixels (8-directional) to identify background
+     * regions</li>
+     * <li>Clear all identified background pixels to transparent</li>
+     * <li>Gentle edge feathering only on very bright boundary pixels</li>
      * </ol>
-     * <p>Catches standard white backgrounds, off-white tones, and checkerboard
-     * transparency patterns that some image editors bake into exported PNGs.</p>
+     * <p>
+     * Only targets truly white/near-white backgrounds. Preserves light-colored
+     * clothing by using strict thresholds. Includes a safety check that returns
+     * the original image if the algorithm would erase too much (> 85%).
+     * </p>
      */
     private static android.graphics.Bitmap removeWhiteBackground(android.graphics.Bitmap src) {
-        if (src == null) return null;
+        if (src == null)
+            return null;
         int width = src.getWidth();
         int height = src.getHeight();
 
@@ -302,7 +314,8 @@ public class StylistFragment extends Fragment {
         boolean[] isBackground = new boolean[width * height];
         java.util.ArrayDeque<int[]> queue = new java.util.ArrayDeque<>();
 
-        // Phase 1: Seed BFS from all border pixels that match light-background criteria
+        // Phase 1: Seed BFS from all border pixels that match strict white-background
+        // criteria
         for (int x = 0; x < width; x++) {
             seedBorder(x, 0, width, pixels, isBackground, queue);
             seedBorder(x, height - 1, width, pixels, isBackground, queue);
@@ -312,9 +325,9 @@ public class StylistFragment extends Fragment {
             seedBorder(width - 1, y, width, pixels, isBackground, queue);
         }
 
-        // Phase 2: 8-directional BFS flood fill for better diagonal edge coverage
-        int[] dxArr = {1, -1, 0, 0, 1, -1, 1, -1};
-        int[] dyArr = {0, 0, 1, -1, 1, -1, -1, 1};
+        // Phase 2: 8-directional BFS flood fill
+        int[] dxArr = { 1, -1, 0, 0, 1, -1, 1, -1 };
+        int[] dyArr = { 0, 0, 1, -1, 1, -1, -1, 1 };
 
         while (!queue.isEmpty()) {
             int[] pt = queue.poll();
@@ -328,26 +341,41 @@ public class StylistFragment extends Fragment {
                     if (!isBackground[nIdx] && isLightBackground(pixels[nIdx])) {
                         isBackground[nIdx] = true;
                         pixels[nIdx] = android.graphics.Color.TRANSPARENT;
-                        queue.add(new int[]{nx, ny});
+                        queue.add(new int[] { nx, ny });
                     }
                 }
             }
         }
 
-        // Phase 3: Edge feathering — soften boundary between clothing and removed background
+        // Safety check: if more than 85% of pixels are flagged as background,
+        // the algorithm is likely destroying the clothing — return original image
+        int bgCount = 0;
+        for (boolean bg : isBackground) {
+            if (bg)
+                bgCount++;
+        }
+        if (bgCount > (int) (pixels.length * 0.85)) {
+            return src;
+        }
+
+        // Phase 3: Gentle edge feathering — only on truly bright boundary pixels
         int[] output = pixels.clone();
         for (int y = 1; y < height - 1; y++) {
             for (int x = 1; x < width - 1; x++) {
                 int idx = y * width + x;
-                if (isBackground[idx]) continue;
+                if (isBackground[idx])
+                    continue;
 
                 // Count how many of the 8 neighbors are background
-                int bgCount = 0;
+                int neighborBgCount = 0;
                 for (int d = 0; d < 8; d++) {
-                    if (isBackground[(y + dyArr[d]) * width + (x + dxArr[d])]) bgCount++;
+                    if (isBackground[(y + dyArr[d]) * width + (x + dxArr[d])])
+                        neighborBgCount++;
                 }
 
-                if (bgCount >= 2) {
+                // Only feather pixels that are mostly surrounded by background (>= 4 neighbors)
+                // and are themselves very bright (near-white edge remnants)
+                if (neighborBgCount >= 4) {
                     int color = pixels[idx];
                     int a = (color >> 24) & 0xFF;
                     int r = (color >> 16) & 0xFF;
@@ -355,10 +383,10 @@ public class StylistFragment extends Fragment {
                     int b = color & 0xFF;
                     int brightness = (r + g + b) / 3;
 
-                    // For light-colored edge pixels, fade alpha proportionally
-                    if (brightness > 170) {
-                        float bgRatio = bgCount / 8.0f;
-                        float brightFactor = Math.min(1.0f, (brightness - 170f) / 85.0f);
+                    // Only fade very bright edge pixels (near-white remnants, not clothing)
+                    if (brightness > 220) {
+                        float bgRatio = neighborBgCount / 8.0f;
+                        float brightFactor = Math.min(1.0f, (brightness - 220f) / 35.0f);
                         int newAlpha = Math.max(0, (int) (a * (1.0f - bgRatio * brightFactor)));
                         output[idx] = (newAlpha << 24) | (r << 16) | (g << 8) | b;
                     }
@@ -374,44 +402,51 @@ public class StylistFragment extends Fragment {
 
     /**
      * Determines whether a pixel color should be treated as background.
-     * Catches white, near-white, light gray, and checkerboard transparency patterns.
+     * Uses STRICT thresholds to only catch truly white/near-white pixels
+     * and avoid eating into light-colored clothing.
      */
     private static boolean isLightBackground(int color) {
         int a = (color >> 24) & 0xFF;
-        if (a < 50) return true;
+        // Fully/nearly transparent pixels are background
+        if (a < 30)
+            return true;
 
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
 
-        // White / near-white (all channels above 200)
-        if (r > 200 && g > 200 && b > 200) return true;
+        // Only truly white / near-white (all channels above 235)
+        if (r > 235 && g > 235 && b > 235)
+            return true;
 
-        // Light achromatic gray — catches checkerboard transparency patterns
-        // (standard transparency grid uses #CCCCCC / #FFFFFF alternating)
+        // Very light achromatic gray with almost no color variation
+        // (catches checkerboard transparency patterns: #CCCCCC / #FFFFFF)
         int brightness = (r + g + b) / 3;
         int maxCh = Math.max(r, Math.max(g, b));
         int minCh = Math.min(r, Math.min(g, b));
-        if (brightness > 180 && (maxCh - minCh) < 30) return true;
+        if (brightness > 230 && (maxCh - minCh) < 15)
+            return true;
 
         return false;
     }
 
     /**
-     * Seeds a border pixel into the BFS queue if it matches light-background criteria.
+     * Seeds a border pixel into the BFS queue if it matches strict white-background
+     * criteria.
      */
     private static void seedBorder(int x, int y, int width,
-                                    int[] pixels, boolean[] isBackground,
-                                    java.util.ArrayDeque<int[]> queue) {
+            int[] pixels, boolean[] isBackground,
+            java.util.ArrayDeque<int[]> queue) {
         int idx = y * width + x;
-        if (isBackground[idx]) return;
+        if (isBackground[idx])
+            return;
         if (isLightBackground(pixels[idx])) {
             isBackground[idx] = true;
             int a = (pixels[idx] >> 24) & 0xFF;
-            if (a >= 50) {
+            if (a >= 30) {
                 pixels[idx] = android.graphics.Color.TRANSPARENT;
             }
-            queue.add(new int[]{x, y});
+            queue.add(new int[] { x, y });
         }
     }
 
@@ -422,19 +457,23 @@ public class StylistFragment extends Fragment {
 
     private void triggerOutfitGeneration() {
         if (OWM_API_KEY.isEmpty()) {
-            showWeatherSimulatorDialog("OpenWeatherMap API Key is not configured. Please select a temperature range to simulate.");
+            showWeatherSimulatorDialog(
+                    "OpenWeatherMap API Key is not configured. Please select a temperature range to simulate.");
         } else {
             Disposable disposable = viewModel.fetchTemperature(DEFAULT_CITY, OWM_API_KEY)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                             temp -> {
                                 viewModel.generateSmartOutfit(temp);
-                                Snackbar.make(binding.getRoot(), "Live weather retrieved: " + String.format(java.util.Locale.US, "%.1f", temp) + "°C", Snackbar.LENGTH_SHORT).show();
+                                Snackbar.make(
+                                        binding.getRoot(), "Live weather retrieved: "
+                                                + String.format(java.util.Locale.US, "%.1f", temp) + "°C",
+                                        Snackbar.LENGTH_SHORT).show();
                             },
                             throwable -> {
-                                showWeatherSimulatorDialog("Network fetch failed: " + throwable.getMessage() + "\nFalling back to weather simulator.");
-                            }
-                    );
+                                showWeatherSimulatorDialog("Network fetch failed: " + throwable.getMessage()
+                                        + "\nFalling back to weather simulator.");
+                            });
             compositeDisposable.add(disposable);
         }
     }
@@ -465,7 +504,8 @@ public class StylistFragment extends Fragment {
                     }
                     viewModel.setWeatherDescription(statusDesc);
                     viewModel.generateSmartOutfit(simulatedTemp);
-                    Snackbar.make(binding.getRoot(), "Generating outfit for " + simulatedTemp + "°C...", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(binding.getRoot(), "Generating outfit for " + simulatedTemp + "°C...",
+                            Snackbar.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -473,7 +513,8 @@ public class StylistFragment extends Fragment {
 
     /**
      * Custom OnTouchListener that forwards events to GestureDetectorCompat.
-     * Manages active layer highlights and horizontal swipe/tap interactions on mannequin segments.
+     * Manages active layer highlights and horizontal swipe/tap interactions on
+     * mannequin segments.
      */
     private class MannequinTouchListener implements View.OnTouchListener {
         private final StylistViewModel.SlotType slotType;
@@ -499,12 +540,14 @@ public class StylistFragment extends Fragment {
 
                         @Override
                         public boolean onFling(@Nullable MotionEvent e1, @NonNull MotionEvent e2,
-                                               float velocityX, float velocityY) {
-                            if (e1 == null) return false;
+                                float velocityX, float velocityY) {
+                            if (e1 == null)
+                                return false;
                             float diffX = e2.getX() - e1.getX();
                             float diffY = e2.getY() - e1.getY();
                             if (Math.abs(diffX) > Math.abs(diffY)) {
-                                if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                                if (Math.abs(diffX) > SWIPE_THRESHOLD
+                                        && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
                                     if (diffX > 0) {
                                         viewModel.nextItem(slotType);
                                     } else {
