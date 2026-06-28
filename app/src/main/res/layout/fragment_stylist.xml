@@ -138,7 +138,64 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
-            <!-- INVISIBLE TOUCH SENSORS (Layered on top of image layers) -->
+            <!-- ZONE LABELS (positioned on the left side of each section) -->
+            <TextView
+                android:id="@+id/label_head"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Accessories"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:alpha="0.5"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginStart="4dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/guideline_head_bottom"
+                app:layout_constraintStart_toStartOf="parent"/>
+
+            <TextView
+                android:id="@+id/label_chest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Upper Body"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:alpha="0.5"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginStart="4dp"
+                app:layout_constraintTop_toBottomOf="@id/guideline_head_bottom"
+                app:layout_constraintBottom_toTopOf="@id/guideline_chest_bottom"
+                app:layout_constraintStart_toStartOf="parent"/>
+
+            <TextView
+                android:id="@+id/label_legs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lower Body"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:alpha="0.5"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginStart="4dp"
+                app:layout_constraintTop_toBottomOf="@id/guideline_chest_bottom"
+                app:layout_constraintBottom_toTopOf="@id/guideline_legs_bottom"
+                app:layout_constraintStart_toStartOf="parent"/>
+
+            <TextView
+                android:id="@+id/label_feet"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Footwear"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:alpha="0.5"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginStart="4dp"
+                app:layout_constraintTop_toBottomOf="@id/guideline_legs_bottom"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
+
+            <!-- INVISIBLE TOUCH SENSORS (Layered on top of image layers and labels) -->
             <View
                 android:id="@+id/touch_zone_head"
                 android:layout_width="match_parent"
