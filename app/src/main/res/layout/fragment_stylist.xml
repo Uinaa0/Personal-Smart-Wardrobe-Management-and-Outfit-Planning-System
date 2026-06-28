@@ -53,13 +53,13 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginVertical="12dp">
 
-            <!-- Mannequin Background Symmetrical Guide -->
+            <!-- Mannequin Background (Hidden — only clothing layers shown) -->
             <ImageView
                 android:id="@+id/img_mannequin_base"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="fitCenter"
-                android:alpha="0.25"
+                android:visibility="gone"
                 android:src="@drawable/ic_mannequin"
                 android:contentDescription="Mannequin silhouette guide"
                 app:layout_constraintTop_toTopOf="parent"
