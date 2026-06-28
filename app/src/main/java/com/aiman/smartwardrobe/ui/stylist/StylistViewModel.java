@@ -194,25 +194,38 @@ public class StylistViewModel extends AndroidViewModel {
         setActiveLayer(slot);
         switch (slot) {
             case HEAD:
-                if (selectedHead.getValue() == null && !headItems.isEmpty()) {
+                if (selectedHead.getValue() != null) {
+                    // Already has a selection — clear it (toggle off)
+                    selectedHead.setValue(null);
+                    headIndex = -1;
+                } else if (!headItems.isEmpty()) {
                     headIndex = 0;
                     selectedHead.setValue(headItems.get(0));
                 }
                 break;
             case CHEST:
-                if (selectedTop.getValue() == null && !chestItems.isEmpty()) {
+                if (selectedTop.getValue() != null) {
+                    selectedTop.setValue(null);
+                    chestIndex = -1;
+                } else if (!chestItems.isEmpty()) {
                     chestIndex = 0;
                     selectedTop.setValue(chestItems.get(0));
                 }
                 break;
             case LEGS:
-                if (selectedBottom.getValue() == null && !legsItems.isEmpty()) {
+                if (selectedBottom.getValue() != null) {
+                    selectedBottom.setValue(null);
+                    legsIndex = -1;
+                } else if (!legsItems.isEmpty()) {
                     legsIndex = 0;
                     selectedBottom.setValue(legsItems.get(0));
                 }
                 break;
             case FEET:
-                if (selectedShoes.getValue() == null && !feetItems.isEmpty()) {
+                if (selectedShoes.getValue() != null) {
+                    selectedShoes.setValue(null);
+                    feetIndex = -1;
+                } else if (!feetItems.isEmpty()) {
                     feetIndex = 0;
                     selectedShoes.setValue(feetItems.get(0));
                 }
@@ -225,23 +238,28 @@ public class StylistViewModel extends AndroidViewModel {
         switch (slot) {
             case HEAD:
                 if (headItems.isEmpty()) return;
-                headIndex = (headIndex + 1) % headItems.size();
-                selectedHead.setValue(headItems.get(headIndex));
+                // Cycle: -1 (empty) -> 0 -> 1 -> ... -> size-1 -> -1 (empty)
+                headIndex = headIndex + 1;
+                if (headIndex >= headItems.size()) headIndex = -1;
+                selectedHead.setValue(headIndex >= 0 ? headItems.get(headIndex) : null);
                 break;
             case CHEST:
                 if (chestItems.isEmpty()) return;
-                chestIndex = (chestIndex + 1) % chestItems.size();
-                selectedTop.setValue(chestItems.get(chestIndex));
+                chestIndex = chestIndex + 1;
+                if (chestIndex >= chestItems.size()) chestIndex = -1;
+                selectedTop.setValue(chestIndex >= 0 ? chestItems.get(chestIndex) : null);
                 break;
             case LEGS:
                 if (legsItems.isEmpty()) return;
-                legsIndex = (legsIndex + 1) % legsItems.size();
-                selectedBottom.setValue(legsItems.get(legsIndex));
+                legsIndex = legsIndex + 1;
+                if (legsIndex >= legsItems.size()) legsIndex = -1;
+                selectedBottom.setValue(legsIndex >= 0 ? legsItems.get(legsIndex) : null);
                 break;
             case FEET:
                 if (feetItems.isEmpty()) return;
-                feetIndex = (feetIndex + 1) % feetItems.size();
-                selectedShoes.setValue(feetItems.get(feetIndex));
+                feetIndex = feetIndex + 1;
+                if (feetIndex >= feetItems.size()) feetIndex = -1;
+                selectedShoes.setValue(feetIndex >= 0 ? feetItems.get(feetIndex) : null);
                 break;
         }
     }
@@ -251,23 +269,28 @@ public class StylistViewModel extends AndroidViewModel {
         switch (slot) {
             case HEAD:
                 if (headItems.isEmpty()) return;
-                headIndex = (headIndex - 1 + headItems.size()) % headItems.size();
-                selectedHead.setValue(headItems.get(headIndex));
+                // Cycle: -1 (empty) <- 0 <- 1 <- ... <- size-1 <- -1 (empty)
+                headIndex = headIndex - 1;
+                if (headIndex < -1) headIndex = headItems.size() - 1;
+                selectedHead.setValue(headIndex >= 0 ? headItems.get(headIndex) : null);
                 break;
             case CHEST:
                 if (chestItems.isEmpty()) return;
-                chestIndex = (chestIndex - 1 + chestItems.size()) % chestItems.size();
-                selectedTop.setValue(chestItems.get(chestIndex));
+                chestIndex = chestIndex - 1;
+                if (chestIndex < -1) chestIndex = chestItems.size() - 1;
+                selectedTop.setValue(chestIndex >= 0 ? chestItems.get(chestIndex) : null);
                 break;
             case LEGS:
                 if (legsItems.isEmpty()) return;
-                legsIndex = (legsIndex - 1 + legsItems.size()) % legsItems.size();
-                selectedBottom.setValue(legsItems.get(legsIndex));
+                legsIndex = legsIndex - 1;
+                if (legsIndex < -1) legsIndex = legsItems.size() - 1;
+                selectedBottom.setValue(legsIndex >= 0 ? legsItems.get(legsIndex) : null);
                 break;
             case FEET:
                 if (feetItems.isEmpty()) return;
-                feetIndex = (feetIndex - 1 + feetItems.size()) % feetItems.size();
-                selectedShoes.setValue(feetItems.get(feetIndex));
+                feetIndex = feetIndex - 1;
+                if (feetIndex < -1) feetIndex = feetItems.size() - 1;
+                selectedShoes.setValue(feetIndex >= 0 ? feetItems.get(feetIndex) : null);
                 break;
         }
     }
