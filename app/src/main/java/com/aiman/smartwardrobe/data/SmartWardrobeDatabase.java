@@ -143,6 +143,7 @@ public abstract class SmartWardrobeDatabase extends RoomDatabase {
      *                memory leaks — Room holds a reference to this context)
      * @return The singleton SmartWardrobeDatabase instance
      */
+    @SuppressWarnings("deprecation") // fallbackToDestructiveMigration() is acceptable during FYP development
     public static SmartWardrobeDatabase getInstance(Context context) {
         if (INSTANCE == null) {                          // First check (no lock)
             synchronized (SmartWardrobeDatabase.class) { // Acquire lock
@@ -156,8 +157,9 @@ public abstract class SmartWardrobeDatabase extends RoomDatabase {
                     .addCallback(sRoomDatabaseCallback)
                     // WARNING: fallbackToDestructiveMigration() destroys all data
                     // when the schema version changes. This is acceptable during
-                    // development but should be replaced with proper Migration
-                    // objects before production release.
+                    // development but MUST be replaced with proper Migration
+                    // objects (e.g., Migration(1, 2) with ALTER TABLE statements)
+                    // before any production release to preserve user data.
                     .fallbackToDestructiveMigration()
                     .build();
                 }

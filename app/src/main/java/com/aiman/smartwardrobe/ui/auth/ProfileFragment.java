@@ -247,12 +247,20 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
+    @SuppressWarnings("deprecation")
     private void performLogout() {
         getAuthPrefs().edit().putBoolean(LoginActivity.KEY_LOGGED_IN, false).apply();
         Intent intent = new Intent(requireActivity(), LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-        requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        // Use the modern transition API on Android 14+ (API 34), fall back for older devices
+        if (android.os.Build.VERSION.SDK_INT >= 34) {
+            requireActivity().overrideActivityTransition(
+                    android.app.Activity.OVERRIDE_TRANSITION_OPEN,
+                    android.R.anim.fade_in, android.R.anim.fade_out);
+        } else {
+            requireActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        }
     }
 
     // =========================================================================
