@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    colors.xml — Color Palette for the Smart Wardrobe App
-    Material Design 3 color system with primary, secondary, tertiary roles.
+    colors.xml — Dark Premium Color Palette for the Smart Wardrobe App
+    Unified dark dashboard theme matching the Analytics screen aesthetic.
+    All surface/text colors target the dark navy palette (#0C101B base).
 -->
 <resources>
 
     <!-- ====================================================================
-         PRIMARY — Deep Indigo
+         PRIMARY — Deep Indigo (kept for buttons, links, accents)
          ==================================================================== -->
     <color name="primary">#3F51B5</color>
     <color name="on_primary">#FFFFFF</color>
-    <color name="primary_container">#DEE0FF</color>
-    <color name="on_primary_container">#00105C</color>
+    <color name="primary_container">#1A2050</color>
+    <color name="on_primary_container">#C5CAF6</color>
 
     <!-- ====================================================================
          SECONDARY — Warm Rose
          ==================================================================== -->
     <color name="secondary">#E91E63</color>
     <color name="on_secondary">#FFFFFF</color>
-    <color name="secondary_container">#FFD9E3</color>
-    <color name="on_secondary_container">#3E001E</color>
+    <color name="secondary_container">#3E001E</color>
+    <color name="on_secondary_container">#FFD9E3</color>
 
     <!-- ====================================================================
          TERTIARY — Soft Gold
@@ -28,20 +29,30 @@
     <color name="on_tertiary">#FFFFFF</color>
 
     <!-- ====================================================================
-         SURFACE COLORS — Background and Card Colors
+         SURFACE COLORS — Dark Dashboard Palette
          ==================================================================== -->
-    <color name="surface">#FEFBFF</color>
-    <color name="on_surface">#1B1B1F</color>
-    <color name="surface_variant">#E3E1EC</color>
-    <color name="on_surface_variant">#46464F</color>
+    <color name="surface">#0C101B</color>
+    <color name="on_surface">#FFFFFF</color>
+    <color name="surface_variant">#1A2436</color>
+    <color name="on_surface_variant">#8A9AA4</color>
+
+    <!-- Card and container surfaces -->
+    <color name="surface_card">#121824</color>
+    <color name="surface_card_stroke">#1A2436</color>
 
     <!-- ====================================================================
-         CHIP COLORS — Category Filter Chips
+         ACCENT — Teal (matches Analytics dashboard accent)
          ==================================================================== -->
-    <color name="chip_background_default">#E8E8ED</color>
-    <color name="chip_background_selected">@color/primary_container</color>
-    <color name="chip_text_default">@color/on_surface</color>
-    <color name="chip_text_selected">@color/on_primary_container</color>
+    <color name="accent_teal">#38B2AC</color>
+    <color name="accent_teal_muted">#20373B</color>
+
+    <!-- ====================================================================
+         CHIP COLORS — Category Filter Chips (Dark Theme)
+         ==================================================================== -->
+    <color name="chip_background_default">#1A2436</color>
+    <color name="chip_background_selected">#38B2AC</color>
+    <color name="chip_text_default">#8A9AA4</color>
+    <color name="chip_text_selected">#FFFFFF</color>
 
     <!-- ====================================================================
          ANALYTICS — Category Bar Chart Colors
@@ -58,6 +69,15 @@
     <!-- ====================================================================
          AUTH SCREENS — Login / Sign Up / Profile Background
          ==================================================================== -->
-    <color name="auth_background">#F5F5F7</color>
+    <color name="auth_background">#0C101B</color>
+
+    <!-- ====================================================================
+         SEMANTIC COLORS — Dark-friendly success / danger
+         ==================================================================== -->
+    <color name="success_container">#1B3A2A</color>
+    <color name="success_icon">#4CAF50</color>
+    <color name="danger_container">#3A1B1B</color>
+    <color name="danger_icon">#F44336</color>
+    <color name="danger_text">#F44336</color>
 
 </resources>

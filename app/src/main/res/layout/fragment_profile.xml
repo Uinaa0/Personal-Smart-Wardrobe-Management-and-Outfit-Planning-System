@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     fragment_profile.xml — Profile Screen Layout
-    Displays user avatar, name, email, and account actions.
+    Dark premium dashboard style matching the Analytics screen.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -20,7 +20,7 @@
             android:layout_height="240dp"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@color/primary"
+            android:background="@color/surface_card"
             android:paddingTop="32dp"
             android:paddingBottom="32dp">
 
@@ -30,10 +30,10 @@
                 android:layout_width="96dp"
                 android:layout_height="96dp"
                 app:cardCornerRadius="48dp"
-                app:cardElevation="8dp"
-                app:strokeColor="@color/on_primary"
-                app:strokeWidth="3dp"
-                app:cardBackgroundColor="@color/primary_container">
+                app:cardElevation="0dp"
+                app:strokeColor="@color/accent_teal"
+                app:strokeWidth="2dp"
+                app:cardBackgroundColor="@color/accent_teal_muted">
 
                 <TextView
                     android:id="@+id/text_avatar_initials"
@@ -43,7 +43,7 @@
                     android:text="A"
                     android:textSize="36sp"
                     android:textStyle="bold"
-                    android:textColor="@color/on_primary_container"
+                    android:textColor="@color/accent_teal"
                     android:fontFamily="sans-serif-medium" />
             </com.google.android.material.card.MaterialCardView>
 
@@ -56,7 +56,7 @@
                 android:text="User Name"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="@color/on_primary"
+                android:textColor="@color/on_surface"
                 android:fontFamily="sans-serif-medium" />
 
             <!-- User Email -->
@@ -67,7 +67,7 @@
                 android:layout_marginTop="4dp"
                 android:text="user@email.com"
                 android:textSize="14sp"
-                android:textColor="@color/primary_container" />
+                android:textColor="@color/on_surface_variant" />
         </LinearLayout>
 
         <!-- Stats Row -->
@@ -76,8 +76,10 @@
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             app:cardCornerRadius="20dp"
-            app:cardElevation="3dp"
-            app:cardBackgroundColor="@color/surface">
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/surface_card_stroke"
+            app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -100,7 +102,7 @@
                         android:text="0"
                         android:textSize="28sp"
                         android:textStyle="bold"
-                        android:textColor="@color/primary"
+                        android:textColor="@color/accent_teal"
                         android:fontFamily="sans-serif-medium" />
 
                     <TextView
@@ -116,9 +118,9 @@
                     android:layout_width="1dp"
                     android:layout_height="40dp"
                     android:layout_gravity="center_vertical"
-                    android:background="@color/surface_variant" />
+                    android:background="@color/surface_card_stroke" />
 
-                <!-- Worn Items Count (items with at least 1 wear event) -->
+                <!-- Worn Items Count -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -149,7 +151,7 @@
                     android:layout_width="1dp"
                     android:layout_height="40dp"
                     android:layout_gravity="center_vertical"
-                    android:background="@color/surface_variant" />
+                    android:background="@color/surface_card_stroke" />
 
                 <!-- Wears Count -->
                 <LinearLayout
@@ -187,8 +189,10 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="12dp"
             app:cardCornerRadius="20dp"
-            app:cardElevation="3dp"
-            app:cardBackgroundColor="@color/surface">
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/surface_card_stroke"
+            app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -205,7 +209,7 @@
                     android:text="Account"
                     android:textSize="12sp"
                     android:textStyle="bold"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/accent_teal"
                     android:letterSpacing="0.1" />
 
                 <!-- Edit Profile -->
@@ -224,13 +228,14 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         app:cardCornerRadius="10dp"
-                        app:cardBackgroundColor="@color/primary_container">
+                        app:cardElevation="0dp"
+                        app:cardBackgroundColor="@color/accent_teal_muted">
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_person"
-                            app:tint="@color/primary"
+                            app:tint="@color/accent_teal"
                             android:contentDescription="Edit profile" />
                     </com.google.android.material.card.MaterialCardView>
 
@@ -253,7 +258,7 @@
 
                 <View android:layout_width="match_parent" android:layout_height="1dp"
                     android:layout_marginHorizontal="16dp"
-                    android:background="@color/surface_variant" />
+                    android:background="@color/surface_card_stroke" />
 
                 <!-- Change Password -->
                 <LinearLayout
@@ -271,13 +276,14 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         app:cardCornerRadius="10dp"
-                        app:cardBackgroundColor="@color/secondary_container">
+                        app:cardElevation="0dp"
+                        app:cardBackgroundColor="@color/accent_teal_muted">
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_lock"
-                            app:tint="@color/secondary"
+                            app:tint="@color/accent_teal"
                             android:contentDescription="Change password" />
                     </com.google.android.material.card.MaterialCardView>
 
@@ -308,8 +314,10 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="12dp"
             app:cardCornerRadius="20dp"
-            app:cardElevation="3dp"
-            app:cardBackgroundColor="@color/surface">
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/surface_card_stroke"
+            app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -326,7 +334,7 @@
                     android:text="Preferences"
                     android:textSize="12sp"
                     android:textStyle="bold"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/accent_teal"
                     android:letterSpacing="0.1" />
 
                 <!-- Notifications Toggle -->
@@ -341,13 +349,14 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         app:cardCornerRadius="10dp"
-                        app:cardBackgroundColor="#E8F5E9">
+                        app:cardElevation="0dp"
+                        app:cardBackgroundColor="@color/success_container">
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_analytics"
-                            app:tint="#4CAF50"
+                            app:tint="@color/success_icon"
                             android:contentDescription="Notifications" />
                     </com.google.android.material.card.MaterialCardView>
 
@@ -377,8 +386,10 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="24dp"
             app:cardCornerRadius="20dp"
-            app:cardElevation="3dp"
-            app:cardBackgroundColor="@color/surface">
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/surface_card_stroke"
+            app:cardBackgroundColor="@color/surface_card">
 
             <LinearLayout
                 android:id="@+id/item_logout"
@@ -395,13 +406,14 @@
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     app:cardCornerRadius="10dp"
-                    app:cardBackgroundColor="#FFEBEE">
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/danger_container">
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_logout"
-                        app:tint="#F44336"
+                        app:tint="@color/danger_icon"
                         android:contentDescription="Logout" />
                 </com.google.android.material.card.MaterialCardView>
 
@@ -412,7 +424,7 @@
                     android:layout_marginStart="14dp"
                     android:text="Log Out"
                     android:textSize="15sp"
-                    android:textColor="#F44336"
+                    android:textColor="@color/danger_text"
                     android:textStyle="bold" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
