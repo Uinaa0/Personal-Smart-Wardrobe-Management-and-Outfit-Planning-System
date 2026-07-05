@@ -105,7 +105,7 @@ public class PieChartView extends View {
 
         int width = getWidth();
         int height = getHeight();
-        if (width == 0 || height == 0 || totalValue == 0f) return;
+        if (width == 0 || height == 0) return;
 
         // Determine center and radius
         float centerX = width / 2.0f;
@@ -125,17 +125,19 @@ public class PieChartView extends View {
         paint.setColor(Color.parseColor("#1B2336"));
         canvas.drawCircle(centerX, centerY, radius, paint);
 
-        // Draw each slice as an arc segment
-        for (Slice slice : slices) {
-            float sweepAngle = (slice.value / totalValue) * 360f;
-            paint.setColor(slice.color);
+        if (totalValue > 0f) {
+            // Draw each slice as an arc segment
+            for (Slice slice : slices) {
+                float sweepAngle = (slice.value / totalValue) * 360f;
+                paint.setColor(slice.color);
 
-            // Animate individual arc segments
-            float animatedSweep = sweepAngle * animationProgress;
+                // Animate individual arc segments
+                float animatedSweep = sweepAngle * animationProgress;
 
-            // Reduce arc bounds slightly to leave gap spaces between slices
-            canvas.drawArc(rectF, currentAngle + 2f, animatedSweep - 4f, false, paint);
-            currentAngle += sweepAngle;
+                // Reduce arc bounds slightly to leave gap spaces between slices
+                canvas.drawArc(rectF, currentAngle + 2f, animatedSweep - 4f, false, paint);
+                currentAngle += sweepAngle;
+            }
         }
 
         // Draw Center Info text (Donut Hole Center overlay)
