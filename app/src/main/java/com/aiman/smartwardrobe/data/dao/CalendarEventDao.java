@@ -99,8 +99,10 @@ public interface CalendarEventDao {
      *                  after this date are considered "recently worn"
      * @return Single emitting a list of item IDs worn since the cutoff
      */
-    @Query("SELECT DISTINCT item_id FROM calendar_event WHERE date_worn >= :sinceDate")
-    Single<List<Long>> getRecentlyWornItemIds(long sinceDate);
+    @Query("SELECT DISTINCT c.item_id FROM calendar_event c " +
+           "INNER JOIN wardrobe_item w ON c.item_id = w.item_id " +
+           "WHERE c.date_worn >= :sinceDate AND w.user_id = :userId")
+    Single<List<Long>> getRecentlyWornItemIds(long sinceDate, long userId);
 
     /**
      * Get all wear events across all items, ordered by most recent first.
@@ -122,8 +124,10 @@ public interface CalendarEventDao {
      *
      * @return Single emitting the total wear count across all items
      */
-    @Query("SELECT COUNT(*) FROM calendar_event")
-    Single<Integer> getTotalWearCount();
+    @Query("SELECT COUNT(c.event_id) FROM calendar_event c " +
+           "INNER JOIN wardrobe_item w ON c.item_id = w.item_id " +
+           "WHERE w.user_id = :userId")
+    Single<Integer> getTotalWearCount(long userId);
 
     // =========================================================================
     // ANALYTICS QUERIES (Module 4)
@@ -146,10 +150,11 @@ public interface CalendarEventDao {
            "COUNT(c.event_id) AS wear_count " +
            "FROM wardrobe_item w " +
            "INNER JOIN calendar_event c ON w.item_id = c.item_id " +
+           "WHERE w.user_id = :userId " +
            "GROUP BY w.item_id " +
            "ORDER BY wear_count DESC " +
            "LIMIT :limit")
-    Single<List<ItemWearStats>> getMostWornItems(int limit);
+    Single<List<ItemWearStats>> getMostWornItems(int limit, long userId);
 
     /**
      * Get the least-worn items ranked by wear count (ascending).
@@ -168,10 +173,11 @@ public interface CalendarEventDao {
            "COUNT(c.event_id) AS wear_count " +
            "FROM wardrobe_item w " +
            "LEFT JOIN calendar_event c ON w.item_id = c.item_id " +
+           "WHERE w.user_id = :userId " +
            "GROUP BY w.item_id " +
            "ORDER BY wear_count ASC " +
            "LIMIT :limit")
-    Single<List<ItemWearStats>> getLeastWornItems(int limit);
+    Single<List<ItemWearStats>> getLeastWornItems(int limit, long userId);
 
     // =========================================================================
     // WEAR HISTORY QUERY (Wear History Feature)
@@ -189,7 +195,8 @@ public interface CalendarEventDao {
            "w.category, w.fabric_type, w.color_hex, w.image_path " +
            "FROM calendar_event c " +
            "INNER JOIN wardrobe_item w ON c.item_id = w.item_id " +
+           "WHERE w.user_id = :userId " +
            "ORDER BY c.date_worn DESC " +
            "LIMIT :limit")
-    Single<List<WearHistoryEntry>> getWearHistory(int limit);
+    Single<List<WearHistoryEntry>> getWearHistory(int limit, long userId);
 }

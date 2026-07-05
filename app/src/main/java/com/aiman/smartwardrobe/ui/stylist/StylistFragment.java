@@ -1,13 +1,18 @@
 package com.aiman.smartwardrobe.ui.stylist;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -20,6 +25,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.aiman.smartwardrobe.data.entity.WardrobeItem;
 import com.aiman.smartwardrobe.databinding.FragmentStylistBinding;
+import com.aiman.smartwardrobe.ui.auth.LoginActivity;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -27,6 +33,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.util.ArrayDeque;
 import java.util.Locale;
 
@@ -49,8 +56,13 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 public class StylistFragment extends Fragment {
 
     private static final String TAG = "StylistFragment";
-    private static final String OWM_API_KEY = ""; // Insert OpenWeatherMap API Key here
     private static final String DEFAULT_CITY = "Kuala Lumpur";
+
+    private String getWeatherApiKey() {
+        if (getContext() == null) return "";
+        return getContext().getSharedPreferences(LoginActivity.PREFS_AUTH, Context.MODE_PRIVATE)
+                .getString("weather_api_key", "");
+    }
 
     private FragmentStylistBinding binding;
     private StylistViewModel viewModel;
@@ -117,7 +129,10 @@ public class StylistFragment extends Fragment {
         });
 
         binding.buttonGenerateOutfit.setOnClickListener(v -> triggerOutfitGeneration());
+        binding.buttonShare.setOnClickListener(v -> shareOutfit());
     }
+
+
 
     private void saveWearHistory() {
         Disposable disposable = viewModel.logWearEvent()
@@ -317,11 +332,12 @@ public class StylistFragment extends Fragment {
     }
 
     private void triggerOutfitGeneration() {
-        if (OWM_API_KEY.isEmpty()) {
+        String apiKey = getWeatherApiKey();
+        if (apiKey.isEmpty()) {
             Log.w(TAG, "OpenWeatherMap API key is not configured. Falling back to weather simulator.");
             showWeatherSimulatorDialog("Weather API Key not configured. Using simulator.");
         } else {
-            Disposable disposable = viewModel.fetchTemperature(DEFAULT_CITY, OWM_API_KEY)
+            Disposable disposable = viewModel.fetchTemperature(DEFAULT_CITY, apiKey)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                             temp -> {
@@ -333,6 +349,45 @@ public class StylistFragment extends Fragment {
                                 showWeatherSimulatorDialog("Network fetch failed. Using simulator.");
                             });
             compositeDisposable.add(disposable);
+        }
+    }
+
+    private void shareOutfit() {
+        View canvas = binding.layoutMannequinDoll;
+        if (canvas.getWidth() == 0 || canvas.getHeight() == 0) {
+            Snackbar.make(binding.getRoot(), "Canvas layout is not ready", Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+        Bitmap bitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas c = new android.graphics.Canvas(bitmap);
+        canvas.draw(c);
+
+        try {
+            java.io.File cachePath = new java.io.File(requireContext().getCacheDir(), "images");
+            cachePath.mkdirs();
+            java.io.File file = new java.io.File(cachePath, "outfit.png");
+            try (java.io.FileOutputStream stream = new java.io.FileOutputStream(file)) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            }
+
+            Uri contentUri = androidx.core.content.FileProvider.getUriForFile(
+                    requireContext(),
+                    requireContext().getPackageName() + ".fileprovider",
+                    file
+            );
+
+            if (contentUri != null) {
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                shareIntent.setDataAndType(contentUri, requireContext().getContentResolver().getType(contentUri));
+                shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                shareIntent.setType("image/png");
+                startActivity(Intent.createChooser(shareIntent, "Share your outfit"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Snackbar.make(binding.getRoot(), "Failed to share outfit", Snackbar.LENGTH_SHORT).show();
         }
     }
 

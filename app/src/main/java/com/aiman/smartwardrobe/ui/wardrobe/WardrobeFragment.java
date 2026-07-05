@@ -18,9 +18,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.aiman.smartwardrobe.R;
 import com.aiman.smartwardrobe.data.entity.WardrobeItem;
 import com.aiman.smartwardrobe.databinding.FragmentWardrobeBinding;
+import com.aiman.smartwardrobe.ui.auth.LoginActivity;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import java.util.List;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -92,8 +94,13 @@ public class WardrobeFragment extends Fragment
     private static final int GRID_SPAN_COUNT = 2;
 
     // Weather & Location Configuration (Weather Feature)
-    private static final String OWM_API_KEY = ""; // Insert OpenWeatherMap API Key here
     private static final String DEFAULT_CITY = "Kuala Lumpur";
+
+    private String getWeatherApiKey() {
+        if (getContext() == null) return "";
+        return getContext().getSharedPreferences(LoginActivity.PREFS_AUTH, Context.MODE_PRIVATE)
+                .getString("weather_api_key", "");
+    }
 
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
@@ -134,6 +141,7 @@ public class WardrobeFragment extends Fragment
         setupRecyclerView();
         setupFab();
         setupSearch();
+        setupToolbarSort();
         setupWeatherStatus();
         observeData();
         checkLocationPermissionsAndStart();
@@ -191,6 +199,28 @@ public class WardrobeFragment extends Fragment
         binding.recyclerWardrobe.addItemDecoration(
                 new GridSpacingItemDecoration(GRID_SPAN_COUNT, spacing, true)
         );
+
+        // Swipe-to-delete touch helper configuration
+        androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback swipeCallback =
+                new androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback(0,
+                        androidx.recyclerview.widget.ItemTouchHelper.LEFT | androidx.recyclerview.widget.ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                WardrobeItem item = adapter.getItemAt(position);
+                if (item != null) {
+                    deleteItemWithUndo(item);
+                }
+            }
+        };
+        new androidx.recyclerview.widget.ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.recyclerWardrobe);
     }
 
     /**
@@ -219,6 +249,30 @@ public class WardrobeFragment extends Fragment
 
             @Override
             public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    /**
+     * Inflate sorting options menu in the toolbar and handle selections.
+     */
+    private void setupToolbarSort() {
+        binding.toolbarWardrobe.inflateMenu(R.menu.menu_wardrobe_sort);
+        binding.toolbarWardrobe.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.sort_newest) {
+                viewModel.setSortOrder(WardrobeViewModel.SortOrder.NEWEST);
+                return true;
+            } else if (id == R.id.sort_alphabetical) {
+                viewModel.setSortOrder(WardrobeViewModel.SortOrder.ALPHABETICAL);
+                return true;
+            } else if (id == R.id.sort_price_high) {
+                viewModel.setSortOrder(WardrobeViewModel.SortOrder.PRICE_HIGH);
+                return true;
+            } else if (id == R.id.sort_price_low) {
+                viewModel.setSortOrder(WardrobeViewModel.SortOrder.PRICE_LOW);
+                return true;
+            }
+            return false;
         });
     }
 
@@ -255,17 +309,12 @@ public class WardrobeFragment extends Fragment
 
         // Observe categories and update the filter chip group
         viewModel.getCategories().observe(getViewLifecycleOwner(), categories -> {
-            binding.chipGroupCategories.removeAllViews();
+            rebuildFilterChips(categories, viewModel.getCategoryCounts().getValue());
+        });
 
-            // Add the "All" chip first (always present)
-            Chip allChip = createFilterChip("All", true);
-            binding.chipGroupCategories.addView(allChip);
-
-            // Add a chip for each category found in the database
-            for (String category : categories) {
-                Chip chip = createFilterChip(category, false);
-                binding.chipGroupCategories.addView(chip);
-            }
+        // Observe category counts and update chips
+        viewModel.getCategoryCounts().observe(getViewLifecycleOwner(), counts -> {
+            rebuildFilterChips(viewModel.getCategories().getValue(), counts);
         });
 
         // Observe weather loading state
@@ -320,23 +369,65 @@ public class WardrobeFragment extends Fragment
     // HELPER METHODS
     // =========================================================================
 
+    private void rebuildFilterChips(List<String> categoriesList, java.util.Map<String, Integer> counts) {
+        if (binding == null) return;
+
+        // Save currently checked chip text
+        String checkedText = "All";
+        for (int i = 0; i < binding.chipGroupCategories.getChildCount(); i++) {
+            View child = binding.chipGroupCategories.getChildAt(i);
+            if (child instanceof Chip && ((Chip) child).isChecked()) {
+                String rawText = ((Chip) child).getText().toString();
+                if (rawText.contains(" (")) {
+                    checkedText = rawText.substring(0, rawText.indexOf(" ("));
+                } else {
+                    checkedText = rawText;
+                }
+                break;
+            }
+        }
+
+        binding.chipGroupCategories.removeAllViews();
+
+        // 1. Add "All" Chip
+        int totalCount = 0;
+        if (counts != null) {
+            for (java.util.Map.Entry<String, Integer> entry : counts.entrySet()) {
+                if (!"Favorites ❤️".equals(entry.getKey())) {
+                    totalCount += entry.getValue();
+                }
+            }
+        }
+        Chip allChip = createFilterChip("All", "All".equals(checkedText), totalCount);
+        binding.chipGroupCategories.addView(allChip);
+
+        // 2. Add "Favorites ❤️" Chip
+        int favoritesCount = counts != null ? counts.getOrDefault("Favorites ❤️", 0) : 0;
+        Chip favChip = createFilterChip("Favorites ❤️", "Favorites ❤️".equals(checkedText), favoritesCount);
+        binding.chipGroupCategories.addView(favChip);
+
+        // 3. Add Category Chips
+        if (categoriesList != null) {
+            for (String category : categoriesList) {
+                int count = counts != null ? counts.getOrDefault(category, 0) : 0;
+                Chip chip = createFilterChip(category, category.equals(checkedText), count);
+                binding.chipGroupCategories.addView(chip);
+            }
+        }
+    }
+
     /**
      * Create a Material 3 filter chip for category selection.
-     *
-     * @param text       The chip label (category name or "All")
-     * @param isChecked  Whether this chip should be initially selected
-     * @return A configured Chip view
      */
-    private Chip createFilterChip(String text, boolean isChecked) {
+    private Chip createFilterChip(String text, boolean isChecked, int count) {
         Chip chip = new Chip(requireContext());
-        chip.setText(text);
+        chip.setText(text + " (" + count + ")");
         chip.setCheckable(true);
         chip.setChecked(isChecked);
         chip.setChipBackgroundColorResource(R.color.chip_background_selector);
         chip.setTextColor(getResources().getColorStateList(
                 R.color.chip_text_selector, requireContext().getTheme()));
 
-        // Handle chip selection — filter items by category
         chip.setOnCheckedChangeListener((buttonView, checked) -> {
             if (checked) {
                 // Uncheck all other chips
@@ -347,10 +438,15 @@ public class WardrobeFragment extends Fragment
                     }
                 }
 
-                // Apply the category filter
+                // Apply filters
                 if ("All".equals(text)) {
-                    viewModel.setSelectedCategory(null); // null = no filter
+                    viewModel.setFavoritesOnly(false);
+                    viewModel.setSelectedCategory(null);
+                } else if ("Favorites ❤️".equals(text)) {
+                    viewModel.setFavoritesOnly(true);
+                    viewModel.setSelectedCategory(null);
                 } else {
+                    viewModel.setFavoritesOnly(false);
                     viewModel.setSelectedCategory(text);
                 }
             }
@@ -383,17 +479,27 @@ public class WardrobeFragment extends Fragment
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Delete Item")
                 .setMessage("Are you sure you want to remove this "
-                        + item.getCategory() + " from your wardrobe?")
+                        + (item.getName() != null && !item.getName().trim().isEmpty() ? item.getName() : item.getCategory())
+                        + " from your wardrobe?")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    viewModel.deleteItem(item);
-                    Snackbar.make(
-                            binding.getRoot(),
-                            item.getCategory() + " removed",
-                            Snackbar.LENGTH_SHORT
-                    ).show();
+                    deleteItemWithUndo(item);
                 })
                 .show();
+    }
+
+    private void deleteItemWithUndo(WardrobeItem item) {
+        viewModel.deleteItem(item);
+        String label = (item.getName() != null && !item.getName().trim().isEmpty())
+                ? item.getName() : item.getCategory();
+        Snackbar.make(binding.getRoot(), label + " removed", Snackbar.LENGTH_LONG)
+                .setAction("Undo", v -> viewModel.insertItem(item))
+                .show();
+    }
+
+    @Override
+    public void onFavoriteClick(WardrobeItem item) {
+        viewModel.toggleFavorite(item);
     }
 
     // =========================================================================
@@ -472,11 +578,12 @@ public class WardrobeFragment extends Fragment
     }
 
     private void fetchWeatherByCity(String city) {
-        if (OWM_API_KEY.isEmpty()) {
+        String apiKey = getWeatherApiKey();
+        if (apiKey.isEmpty()) {
             // Default simulator start since key is empty
             viewModel.setTemperatureAndFilter(32.0, "Sunny", "Kuala Lumpur (Simulated)");
         } else {
-            io.reactivex.rxjava3.disposables.Disposable disposable = viewModel.fetchWeatherByCityName(city, OWM_API_KEY)
+            io.reactivex.rxjava3.disposables.Disposable disposable = viewModel.fetchWeatherByCityName(city, apiKey)
                     .subscribe(
                             temp -> {},
                             throwable -> {
@@ -490,10 +597,11 @@ public class WardrobeFragment extends Fragment
     }
 
     private void fetchWeatherByCoords(double lat, double lon) {
-        if (OWM_API_KEY.isEmpty()) {
+        String apiKey = getWeatherApiKey();
+        if (apiKey.isEmpty()) {
             viewModel.setTemperatureAndFilter(32.0, "Sunny", "Current Location (Simulated)");
         } else {
-            io.reactivex.rxjava3.disposables.Disposable disposable = viewModel.fetchWeatherByCoords(lat, lon, OWM_API_KEY)
+            io.reactivex.rxjava3.disposables.Disposable disposable = viewModel.fetchWeatherByCoords(lat, lon, apiKey)
                     .subscribe(
                             temp -> {},
                             throwable -> {

@@ -45,7 +45,7 @@ public interface UserProfileDao {
      * @return A Completable that signals when the insert is complete
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    Completable insertProfile(UserProfile profile);
+    Single<Long> insertProfile(UserProfile profile);
 
     /**
      * Update an existing user profile.

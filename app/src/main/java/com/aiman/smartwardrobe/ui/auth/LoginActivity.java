@@ -12,9 +12,12 @@ import android.view.inputmethod.InputMethodManager;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.aiman.smartwardrobe.R;
+import com.aiman.smartwardrobe.data.SmartWardrobeDatabase;
+import com.aiman.smartwardrobe.data.entity.UserProfile;
 import com.aiman.smartwardrobe.databinding.ActivityLoginBinding;
 import com.aiman.smartwardrobe.ui.MainActivity;
 import com.google.android.material.snackbar.Snackbar;
+import android.widget.Toast;
 
 /**
  * ============================================================================
@@ -162,16 +165,42 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        if (!password.equals(storedPassword)) {
+        if (!HashUtils.hashPassword(password).equals(storedPassword)) {
             binding.layoutPassword.setError("Incorrect password");
             binding.layoutPassword.requestFocus();
             return;
         }
 
-        // Login successful
-        prefs.edit().putBoolean(KEY_LOGGED_IN, true).apply();
-        showSuccess("Welcome back!");
-        goToMain();
+        // Login successful — set user ID and redirect to Main
+        long userId = prefs.getLong("user_id_" + email, -1);
+        if (userId == -1) {
+            UserProfile profile = new UserProfile(prefs.getString(KEY_NAME, "User"), "{}");
+            SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
+                    .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                    .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                    .subscribe(
+                            newId -> {
+                                prefs.edit()
+                                        .putLong("user_id_" + email, newId)
+                                        .putLong("logged_in_user_id", newId)
+                                        .putBoolean(KEY_LOGGED_IN, true)
+                                        .apply();
+                                showSuccess("Welcome back!");
+                                goToMain();
+                            },
+                            throwable -> {
+                                throwable.printStackTrace();
+                                Toast.makeText(this, "Session initialization failed", Toast.LENGTH_SHORT).show();
+                            }
+                    );
+        } else {
+            prefs.edit()
+                    .putLong("logged_in_user_id", userId)
+                    .putBoolean(KEY_LOGGED_IN, true)
+                    .apply();
+            showSuccess("Welcome back!");
+            goToMain();
+        }
     }
 
     // =========================================================================

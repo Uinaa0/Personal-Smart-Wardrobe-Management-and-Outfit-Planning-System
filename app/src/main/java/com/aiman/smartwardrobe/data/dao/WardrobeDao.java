@@ -148,8 +148,8 @@ public interface WardrobeDao {
      *
      * @return Flowable emitting the complete list of wardrobe items
      */
-    @Query("SELECT * FROM wardrobe_item ORDER BY date_added DESC")
-    Flowable<List<WardrobeItem>> getAllItems();
+    @Query("SELECT * FROM wardrobe_item WHERE user_id = :userId ORDER BY date_added DESC")
+    Flowable<List<WardrobeItem>> getAllItems(long userId);
 
     /**
      * Retrieve wardrobe items filtered by a specific clothing category.
@@ -161,8 +161,8 @@ public interface WardrobeDao {
      * @param category The category to filter by (e.g., "T-Shirt", "Jeans")
      * @return Flowable emitting items matching the specified category
      */
-    @Query("SELECT * FROM wardrobe_item WHERE category = :category ORDER BY date_added DESC")
-    Flowable<List<WardrobeItem>> getItemsByCategory(String category);
+    @Query("SELECT * FROM wardrobe_item WHERE category = :category AND user_id = :userId ORDER BY date_added DESC")
+    Flowable<List<WardrobeItem>> getItemsByCategory(String category, long userId);
 
     /**
      * Retrieve a single wardrobe item by its unique ID.
@@ -187,8 +187,8 @@ public interface WardrobeDao {
      *
      * @return Single emitting the total number of wardrobe items
      */
-    @Query("SELECT COUNT(*) FROM wardrobe_item")
-    Single<Integer> getItemCount();
+    @Query("SELECT COUNT(*) FROM wardrobe_item WHERE user_id = :userId")
+    Single<Integer> getItemCount(long userId);
 
     /**
      * Get all distinct categories that have at least one item.
@@ -200,8 +200,8 @@ public interface WardrobeDao {
      *
      * @return Flowable emitting the list of distinct category strings
      */
-    @Query("SELECT DISTINCT category FROM wardrobe_item ORDER BY category ASC")
-    Flowable<List<String>> getAllCategories();
+    @Query("SELECT DISTINCT category FROM wardrobe_item WHERE user_id = :userId ORDER BY category ASC")
+    Flowable<List<String>> getAllCategories(long userId);
 
     /**
      * Retrieve wardrobe items matching a list of category names.
@@ -210,8 +210,8 @@ public interface WardrobeDao {
      * @param categories List of category strings (e.g. ["T-Shirt", "Shirt", "Sweater"])
      * @return Flowable emitting the list of items matching any of the specified categories
      */
-    @Query("SELECT * FROM wardrobe_item WHERE category IN (:categories) ORDER BY date_added DESC")
-    Flowable<List<WardrobeItem>> getItemsByCategories(List<String> categories);
+    @Query("SELECT * FROM wardrobe_item WHERE category IN (:categories) AND user_id = :userId ORDER BY date_added DESC")
+    Flowable<List<WardrobeItem>> getItemsByCategories(List<String> categories, long userId);
 
     /**
      * Retrieve a static snapshot of wardrobe items matching a list of categories.
@@ -220,8 +220,8 @@ public interface WardrobeDao {
      * @param categories List of category strings to retrieve
      * @return Single emitting the snapshot list of matching items
      */
-    @Query("SELECT * FROM wardrobe_item WHERE category IN (:categories) ORDER BY date_added DESC")
-    Single<List<WardrobeItem>> getItemsByCategoriesSingle(List<String> categories);
+    @Query("SELECT * FROM wardrobe_item WHERE category IN (:categories) AND user_id = :userId ORDER BY date_added DESC")
+    Single<List<WardrobeItem>> getItemsByCategoriesSingle(List<String> categories, long userId);
 
     // =========================================================================
     // ANALYTICS QUERIES (Module 4)
@@ -235,8 +235,8 @@ public interface WardrobeDao {
      *
      * @return Single emitting the sum of all purchase prices
      */
-    @Query("SELECT COALESCE(SUM(purchase_price), 0) FROM wardrobe_item")
-    Single<Double> getTotalValue();
+    @Query("SELECT COALESCE(SUM(purchase_price), 0) FROM wardrobe_item WHERE user_id = :userId")
+    Single<Double> getTotalValue(long userId);
 
     /**
      * Get the distribution of items across categories.
@@ -250,8 +250,8 @@ public interface WardrobeDao {
      *
      * @return Single emitting the list of category counts
      */
-    @Query("SELECT category, COUNT(*) AS count FROM wardrobe_item GROUP BY category ORDER BY count DESC")
-    Single<List<CategoryCount>> getCategoryDistribution();
+    @Query("SELECT category, COUNT(*) AS count FROM wardrobe_item WHERE user_id = :userId GROUP BY category ORDER BY count DESC")
+    Single<List<CategoryCount>> getCategoryDistribution(long userId);
 
     // =========================================================================
     // SEARCH QUERY (Search Feature)
@@ -263,7 +263,7 @@ public interface WardrobeDao {
      * @param query The search term to match against category and fabric_type
      * @return Flowable emitting the list of matching items
      */
-    @Query("SELECT * FROM wardrobe_item WHERE category LIKE '%' || :query || '%' " +
-           "OR fabric_type LIKE '%' || :query || '%' ORDER BY date_added DESC")
-    Flowable<List<WardrobeItem>> searchItems(String query);
+    @Query("SELECT * FROM wardrobe_item WHERE (category LIKE '%' || :query || '%' " +
+           "OR fabric_type LIKE '%' || :query || '%') AND user_id = :userId ORDER BY date_added DESC")
+    Flowable<List<WardrobeItem>> searchItems(String query, long userId);
 }

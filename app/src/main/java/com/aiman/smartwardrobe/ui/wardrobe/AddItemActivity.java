@@ -95,6 +95,9 @@ public class AddItemActivity extends AppCompatActivity {
     /** The original userId (preserved during edit) */
     private long originalUserId = 0;
 
+    /** The original favorite status (preserved during edit) */
+    private boolean originalIsFavorite = false;
+
     // =========================================================================
     // PREDEFINED COLOR PALETTE
     // =========================================================================
@@ -355,6 +358,13 @@ public class AddItemActivity extends AppCompatActivity {
                             // Pre-fill price
                             binding.editPrice.setText(String.valueOf(item.getPurchasePrice()));
 
+                            // Pre-fill name
+                            if (item.getName() != null) {
+                                binding.editName.setText(item.getName());
+                            }
+
+                            originalIsFavorite = item.isFavorite();
+
                             // Pre-fill color selection
                             selectedColorHex = item.getColorHex();
                             binding.textSelectedColor.setText(selectedColorHex);
@@ -530,21 +540,13 @@ public class AddItemActivity extends AppCompatActivity {
     // SAVE ITEM TO DATABASE
     // =========================================================================
 
-    /**
-     * Create a WardrobeItem from the form data and save it to Room.
-     *
-     * <p>The insert is performed asynchronously via RxJava:
-     * <ul>
-     *   <li>subscribeOn(Schedulers.io) — runs on background thread</li>
-     *   <li>observeOn(AndroidSchedulers.mainThread) — callback on UI thread</li>
-     * </ul></p>
-     */
     private void saveItem() {
         // Extract values from the form
         String category = binding.dropdownCategory.getText().toString().trim();
         String fabricType = binding.dropdownFabric.getText().toString().trim();
         double price = Double.parseDouble(
                 binding.editPrice.getText().toString().trim());
+        String name = binding.editName.getText() != null ? binding.editName.getText().toString().trim() : "";
 
         if (isEditMode) {
             // UPDATE existing item — preserve original ID and dateAdded
@@ -558,6 +560,8 @@ public class AddItemActivity extends AppCompatActivity {
             );
             item.setItemId(editItemId);    // Set the existing ID
             item.setUserId(originalUserId); // Preserve user association
+            item.setName(name);
+            item.setFavorite(originalIsFavorite);
 
             Disposable disposable = repository.updateItem(item)
                     .observeOn(AndroidSchedulers.mainThread())
@@ -586,6 +590,7 @@ public class AddItemActivity extends AppCompatActivity {
                     selectedImagePath,
                     System.currentTimeMillis()
             );
+            item.setName(name);
 
             Disposable disposable = repository.insertItem(item)
                     .observeOn(AndroidSchedulers.mainThread())

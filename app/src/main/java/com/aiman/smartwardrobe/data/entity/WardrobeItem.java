@@ -182,6 +182,18 @@ public class WardrobeItem {
     @ColumnInfo(name = "date_added")
     private long dateAdded;
 
+    /**
+     * Optional custom name for the item.
+     */
+    @ColumnInfo(name = "name")
+    private String name;
+
+    /**
+     * Whether the item is bookmarked as a favorite.
+     */
+    @ColumnInfo(name = "is_favorite", defaultValue = "0")
+    private boolean isFavorite;
+
     // =========================================================================
     // CONSTRUCTORS
     // =========================================================================
@@ -214,6 +226,8 @@ public class WardrobeItem {
         this.purchasePrice = purchasePrice;
         this.imagePath = imagePath;
         this.dateAdded = dateAdded;
+        this.name = "";
+        this.isFavorite = false;
     }
 
     // =========================================================================
@@ -286,6 +300,22 @@ public class WardrobeItem {
 
     public void setUserId(long userId) {
         this.userId = userId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.isFavorite = favorite;
     }
 
     // =========================================================================

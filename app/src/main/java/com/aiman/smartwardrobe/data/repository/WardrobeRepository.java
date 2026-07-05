@@ -1,6 +1,7 @@
 package com.aiman.smartwardrobe.data.repository;
 
 import android.app.Application;
+import android.content.Context;
 
 import com.aiman.smartwardrobe.data.SmartWardrobeDatabase;
 import com.aiman.smartwardrobe.data.dao.CalendarEventDao;
@@ -90,29 +91,9 @@ public class WardrobeRepository {
 
     /** DAO for styling ontology rules */
     private final StylingOntologyDao stylingOntologyDao;
+    private final Application application;
 
-    // =========================================================================
-    // CACHED DATA — Reactive Streams from Room
-    // =========================================================================
 
-    /**
-     * A continuously-updating stream of ALL wardrobe items.
-     * Room's Flowable automatically re-emits the full list whenever
-     * the underlying table changes (insert/update/delete).
-     *
-     * <p>
-     * This stream is cached at the Repository level so that multiple
-     * observers (e.g., multiple ViewModels or fragments) share the same
-     * database query rather than creating redundant queries.
-     * </p>
-     */
-    private final Flowable<List<WardrobeItem>> allItems;
-
-    /**
-     * A continuously-updating stream of distinct category names.
-     * Used to dynamically populate category filter chips in the UI.
-     */
-    private final Flowable<List<String>> allCategories;
 
     // =========================================================================
     // CONSTRUCTOR
@@ -131,20 +112,19 @@ public class WardrobeRepository {
      *                    database singleton
      */
     public WardrobeRepository(Application application) {
+        this.application = application;
         // Obtain the database singleton and extract DAOs
         SmartWardrobeDatabase database = SmartWardrobeDatabase.getInstance(application);
         this.wardrobeDao = database.wardrobeDao();
         this.calendarEventDao = database.calendarEventDao();
         this.stylingOntologyDao = database.stylingOntologyDao();
 
-        // Initialize cached Flowable streams
-        // These queries are NOT executed here — they're lazy and only
-        // run when something subscribes to them.
-        this.allItems = wardrobeDao.getAllItems()
-                .subscribeOn(Schedulers.io());
 
-        this.allCategories = wardrobeDao.getAllCategories()
-                .subscribeOn(Schedulers.io());
+    }
+
+    private long getLoggedInUserId() {
+        return application.getSharedPreferences("smart_wardrobe_auth", Context.MODE_PRIVATE)
+                .getLong("logged_in_user_id", 0);
     }
 
     // =========================================================================
@@ -164,7 +144,8 @@ public class WardrobeRepository {
      *         ordered by date_added DESC (most recent first)
      */
     public Flowable<List<WardrobeItem>> getAllItems() {
-        return allItems;
+        return wardrobeDao.getAllItems(getLoggedInUserId())
+                .subscribeOn(Schedulers.io());
     }
 
     /**
@@ -174,7 +155,7 @@ public class WardrobeRepository {
      * @return Flowable emitting items matching the specified category
      */
     public Flowable<List<WardrobeItem>> getItemsByCategory(String category) {
-        return wardrobeDao.getItemsByCategory(category)
+        return wardrobeDao.getItemsByCategory(category, getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -195,7 +176,8 @@ public class WardrobeRepository {
      * @return Flowable emitting the list of distinct categories
      */
     public Flowable<List<String>> getAllCategories() {
-        return allCategories;
+        return wardrobeDao.getAllCategories(getLoggedInUserId())
+                .subscribeOn(Schedulers.io());
     }
 
     /**
@@ -204,7 +186,7 @@ public class WardrobeRepository {
      * @return Single emitting the item count
      */
     public Single<Integer> getItemCount() {
-        return wardrobeDao.getItemCount()
+        return wardrobeDao.getItemCount(getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -225,6 +207,7 @@ public class WardrobeRepository {
      * @return Completable that signals completion or error
      */
     public Completable insertItem(WardrobeItem item) {
+        item.setUserId(getLoggedInUserId());
         return wardrobeDao.insertItem(item)
                 .subscribeOn(Schedulers.io());
     }
@@ -236,6 +219,7 @@ public class WardrobeRepository {
      * @return Completable that signals completion or error
      */
     public Completable updateItem(WardrobeItem item) {
+        item.setUserId(getLoggedInUserId());
         return wardrobeDao.updateItem(item)
                 .subscribeOn(Schedulers.io());
     }
@@ -295,7 +279,7 @@ public class WardrobeRepository {
         // Calculate the epoch timestamp for N days ago
         long sinceDate = System.currentTimeMillis()
                 - ((long) days * 24 * 60 * 60 * 1000);
-        return calendarEventDao.getRecentlyWornItemIds(sinceDate)
+        return calendarEventDao.getRecentlyWornItemIds(sinceDate, getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -306,7 +290,7 @@ public class WardrobeRepository {
      * @return Flowable emitting the list of matching items
      */
     public Flowable<List<WardrobeItem>> getItemsByCategories(List<String> categories) {
-        return wardrobeDao.getItemsByCategories(categories)
+        return wardrobeDao.getItemsByCategories(categories, getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -329,7 +313,7 @@ public class WardrobeRepository {
      * @return Single emitting the snapshot list of matching items
      */
     public Single<List<WardrobeItem>> getItemsByCategoriesSingle(List<String> categories) {
-        return wardrobeDao.getItemsByCategoriesSingle(categories)
+        return wardrobeDao.getItemsByCategoriesSingle(categories, getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -343,7 +327,7 @@ public class WardrobeRepository {
      * @return Single emitting the sum of all purchase prices
      */
     public Single<Double> getTotalValue() {
-        return wardrobeDao.getTotalValue()
+        return wardrobeDao.getTotalValue(getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -353,7 +337,7 @@ public class WardrobeRepository {
      * @return Single emitting a list of CategoryCount POJOs
      */
     public Single<List<CategoryCount>> getCategoryDistribution() {
-        return wardrobeDao.getCategoryDistribution()
+        return wardrobeDao.getCategoryDistribution(getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -364,7 +348,7 @@ public class WardrobeRepository {
      * @return Single emitting the list of item wear statistics
      */
     public Single<List<ItemWearStats>> getMostWornItems(int limit) {
-        return calendarEventDao.getMostWornItems(limit)
+        return calendarEventDao.getMostWornItems(limit, getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -375,7 +359,7 @@ public class WardrobeRepository {
      * @return Single emitting the list of item wear statistics
      */
     public Single<List<ItemWearStats>> getLeastWornItems(int limit) {
-        return calendarEventDao.getLeastWornItems(limit)
+        return calendarEventDao.getLeastWornItems(limit, getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -386,7 +370,7 @@ public class WardrobeRepository {
      * @return Single emitting the total wear event count
      */
     public Single<Integer> getTotalWearCount() {
-        return calendarEventDao.getTotalWearCount()
+        return calendarEventDao.getTotalWearCount(getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -401,7 +385,7 @@ public class WardrobeRepository {
      * @return Flowable emitting the list of matching items
      */
     public Flowable<List<WardrobeItem>> searchItems(String query) {
-        return wardrobeDao.searchItems(query)
+        return wardrobeDao.searchItems(query, getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 
@@ -416,7 +400,7 @@ public class WardrobeRepository {
      * @return Single emitting the list of wear history entries
      */
     public Single<List<WearHistoryEntry>> getWearHistory(int limit) {
-        return calendarEventDao.getWearHistory(limit)
+        return calendarEventDao.getWearHistory(limit, getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 }

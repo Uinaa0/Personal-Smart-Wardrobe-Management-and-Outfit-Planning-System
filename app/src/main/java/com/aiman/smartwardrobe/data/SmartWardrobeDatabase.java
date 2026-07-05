@@ -73,7 +73,7 @@ import java.util.concurrent.Executors;
         CalendarEvent.class,
         StylingOntology.class
     },
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 public abstract class SmartWardrobeDatabase extends RoomDatabase {

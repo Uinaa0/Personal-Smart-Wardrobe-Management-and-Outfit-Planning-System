@@ -12,6 +12,8 @@ import android.view.inputmethod.InputMethodManager;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.aiman.smartwardrobe.R;
+import com.aiman.smartwardrobe.data.SmartWardrobeDatabase;
+import com.aiman.smartwardrobe.data.entity.UserProfile;
 import com.aiman.smartwardrobe.databinding.ActivitySignupBinding;
 import com.aiman.smartwardrobe.ui.MainActivity;
 import com.google.android.material.snackbar.Snackbar;
@@ -150,17 +152,30 @@ public class SignUpActivity extends AppCompatActivity {
             return;
         }
 
-        // Save new account
-        prefs.edit()
-                .putString(LoginActivity.KEY_NAME, name)
-                .putString(LoginActivity.KEY_EMAIL, email)
-                .putString(LoginActivity.KEY_PASSWORD, password)
-                .putBoolean(LoginActivity.KEY_LOGGED_IN, true)
-                .apply();
+        // Save new account with database UserProfile creation
+        UserProfile profile = new UserProfile(name, "{}");
+        SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
+                .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                .subscribe(
+                        userId -> {
+                            prefs.edit()
+                                    .putString(LoginActivity.KEY_NAME, name)
+                                    .putString(LoginActivity.KEY_EMAIL, email)
+                                    .putString(LoginActivity.KEY_PASSWORD, HashUtils.hashPassword(password))
+                                    .putLong("logged_in_user_id", userId)
+                                    .putLong("user_id_" + email, userId)
+                                    .putBoolean(LoginActivity.KEY_LOGGED_IN, true)
+                                    .apply();
 
-        // Navigate to main app
-        Snackbar.make(binding.getRoot(), "Account created! Welcome, " + name + "!", Snackbar.LENGTH_SHORT).show();
-        goToMain();
+                            Snackbar.make(binding.getRoot(), "Account created! Welcome, " + name + "!", Snackbar.LENGTH_SHORT).show();
+                            goToMain();
+                        },
+                        throwable -> {
+                            throwable.printStackTrace();
+                            Snackbar.make(binding.getRoot(), "Registration failed: " + throwable.getMessage(), Snackbar.LENGTH_LONG).show();
+                        }
+                );
     }
 
     // =========================================================================

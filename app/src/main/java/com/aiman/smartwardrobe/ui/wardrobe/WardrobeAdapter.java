@@ -74,6 +74,9 @@ public class WardrobeAdapter extends RecyclerView.Adapter<WardrobeAdapter.Wardro
 
         /** Called when a wardrobe item card is long-pressed */
         void onItemLongClick(WardrobeItem item);
+
+        /** Called when the favorite heart icon is clicked */
+        void onFavoriteClick(WardrobeItem item);
     }
 
     // =========================================================================
@@ -151,6 +154,13 @@ public class WardrobeAdapter extends RecyclerView.Adapter<WardrobeAdapter.Wardro
         holder.bind(item);
     }
 
+    public WardrobeItem getItemAt(int position) {
+        if (position >= 0 && position < items.size()) {
+            return items.get(position);
+        }
+        return null;
+    }
+
     /** @return The total number of items in the data set */
     @Override
     public int getItemCount() {
@@ -188,8 +198,22 @@ public class WardrobeAdapter extends RecyclerView.Adapter<WardrobeAdapter.Wardro
          * @param item The WardrobeItem to display
          */
         void bind(WardrobeItem item) {
-            // --- Category Label ---
-            binding.textCategory.setText(item.getCategory());
+            // --- Custom Item Name or Category Label ---
+            if (item.getName() != null && !item.getName().trim().isEmpty()) {
+                binding.textCategory.setText(item.getName());
+            } else {
+                binding.textCategory.setText(item.getCategory());
+            }
+
+            // --- Favorite Star Toggle Indicator ---
+            binding.buttonFavorite.setImageResource(
+                    item.isFavorite() ? R.drawable.ic_favorite : R.drawable.ic_favorite_border
+            );
+            binding.buttonFavorite.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onFavoriteClick(item);
+                }
+            });
 
             // --- Fabric Type Label ---
             binding.textFabricType.setText(item.getFabricType());
@@ -299,6 +323,8 @@ public class WardrobeAdapter extends RecyclerView.Adapter<WardrobeAdapter.Wardro
                     && oldItem.getColorHex().equals(newItem.getColorHex())
                     && oldItem.getFabricType().equals(newItem.getFabricType())
                     && oldItem.getPurchasePrice() == newItem.getPurchasePrice()
+                    && oldItem.isFavorite() == newItem.isFavorite()
+                    && (oldItem.getName() != null ? oldItem.getName().equals(newItem.getName()) : newItem.getName() == null)
                     && (oldItem.getImagePath() != null
                         ? oldItem.getImagePath().equals(newItem.getImagePath())
                         : newItem.getImagePath() == null);

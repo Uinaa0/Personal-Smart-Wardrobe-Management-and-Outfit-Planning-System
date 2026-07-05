@@ -20,14 +20,28 @@
         <!-- Title Header -->
         <TextView
             android:id="@+id/text_title"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Fit Stylist"
             android:textSize="26sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/button_share"
+            android:layout_marginEnd="8dp"/>
+
+        <!-- Share button -->
+        <ImageButton
+            android:id="@+id/button_share"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_share"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:tint="?attr/colorOnSurface"
+            android:contentDescription="Share outfit" />
 
         <TextView
             android:id="@+id/text_subtitle"

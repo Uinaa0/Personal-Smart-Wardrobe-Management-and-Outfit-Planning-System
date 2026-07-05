@@ -26,14 +26,31 @@
              Uses centerCrop scaling to fill the card width.
              The aspect ratio (4:5) provides a nice portrait display
              for clothing items. -->
-        <ImageView
-            android:id="@+id/image_item"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:background="?attr/colorSurfaceContainerHighest"
-            android:contentDescription="@string/wardrobe_item_image"
-            tools:src="@drawable/ic_placeholder_clothing" />
+            android:layout_height="200dp">
+
+            <ImageView
+                android:id="@+id/image_item"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="?attr/colorSurfaceContainerHighest"
+                android:contentDescription="@string/wardrobe_item_image"
+                tools:src="@drawable/ic_placeholder_clothing" />
+
+            <ImageButton
+                android:id="@+id/button_favorite"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="top|end"
+                android:layout_margin="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_favorite_border"
+                android:contentDescription="Favorite Toggle Button"
+                app:tint="?attr/colorError" />
+
+        </FrameLayout>
 
         <!-- Item Details Container -->
         <LinearLayout

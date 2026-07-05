@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import android.app.PendingIntent;
+import android.os.Build;
 
 import com.aiman.smartwardrobe.databinding.FragmentProfileBinding;
 import com.aiman.smartwardrobe.data.repository.WardrobeRepository;
@@ -74,6 +76,7 @@ public class ProfileFragment extends Fragment {
 
         loadUserProfile();
         loadStats();
+        loadWeatherApiKeyStatus();
         setupClickListeners();
     }
 
@@ -100,6 +103,20 @@ public class ProfileFragment extends Fragment {
         binding.textProfileName.setText(name);
         binding.textProfileEmail.setText(email);
         binding.textAvatarInitials.setText(generateInitials(name));
+
+        // Load notifications switch preference and schedule alarm if enabled
+        boolean notificationsEnabled = prefs.getBoolean("notifications_enabled", true);
+        binding.switchNotifications.setChecked(notificationsEnabled);
+        binding.switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("notifications_enabled", isChecked).apply();
+            if (isChecked) {
+                scheduleDailyReminder();
+                Snackbar.make(binding.getRoot(), "Daily reminders enabled at 8:00 AM", Snackbar.LENGTH_SHORT).show();
+            } else {
+                cancelDailyReminder();
+                Snackbar.make(binding.getRoot(), "Daily reminders disabled", Snackbar.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
@@ -159,6 +176,7 @@ public class ProfileFragment extends Fragment {
     private void setupClickListeners() {
         binding.itemEditProfile.setOnClickListener(v -> showEditProfileDialog());
         binding.itemChangePassword.setOnClickListener(v -> showChangePasswordDialog());
+        binding.itemWeatherApiKey.setOnClickListener(v -> showWeatherApiKeyDialog());
         binding.itemLogout.setOnClickListener(v -> confirmLogout());
     }
 
@@ -193,6 +211,90 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
+    private void loadWeatherApiKeyStatus() {
+        SharedPreferences prefs = getAuthPrefs();
+        String apiKey = prefs.getString("weather_api_key", "");
+        if (binding == null) return;
+        if (!apiKey.isEmpty()) {
+            if (apiKey.length() > 4) {
+                binding.textApiKeySubtitle.setText("Active (..." + apiKey.substring(apiKey.length() - 4) + ")");
+            } else {
+                binding.textApiKeySubtitle.setText("Active");
+            }
+        } else {
+            binding.textApiKeySubtitle.setText("Tap to configure key");
+        }
+    }
+
+    private void showWeatherApiKeyDialog() {
+        SharedPreferences prefs = getAuthPrefs();
+        String currentKey = prefs.getString("weather_api_key", "");
+
+        android.widget.EditText editText = new android.widget.EditText(requireContext());
+        editText.setText(currentKey);
+        editText.setHint("OpenWeather API Key");
+        int padding = (int) getResources().getDisplayMetrics().density * 20;
+        editText.setPadding(padding, padding / 2, padding, padding / 2);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Weather API Key")
+                .setMessage("Enter your OpenWeatherMap API Key to enable real-time location weather recommendation rules.")
+                .setView(editText)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newKey = editText.getText().toString().trim();
+                    prefs.edit().putString("weather_api_key", newKey).apply();
+                    loadWeatherApiKeyStatus();
+                    Snackbar.make(binding.getRoot(), "API Key saved!", Snackbar.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void scheduleDailyReminder() {
+        android.app.AlarmManager alarmManager = (android.app.AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(requireContext(), DailyReminderReceiver.class);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(requireContext(), 0, intent, flags);
+
+        // Schedule at 8:00 AM daily
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 8);
+        calendar.set(java.util.Calendar.MINUTE, 0);
+        calendar.set(java.util.Calendar.SECOND, 0);
+
+        // If the 8:00 AM time has already passed today, schedule it for tomorrow
+        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
+            calendar.add(java.util.Calendar.DAY_OF_YEAR, 1);
+        }
+
+        if (alarmManager != null) {
+            alarmManager.setRepeating(
+                    android.app.AlarmManager.RTC_WAKEUP,
+                    calendar.getTimeInMillis(),
+                    android.app.AlarmManager.INTERVAL_DAY,
+                    pendingIntent
+            );
+        }
+    }
+
+    private void cancelDailyReminder() {
+        android.app.AlarmManager alarmManager = (android.app.AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(requireContext(), DailyReminderReceiver.class);
+        int flags = PendingIntent.FLAG_NO_CREATE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(requireContext(), 0, intent, flags);
+        if (pendingIntent != null && alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+            pendingIntent.cancel();
+        }
+    }
+
     private void showChangePasswordDialog() {
         android.widget.LinearLayout layout = new android.widget.LinearLayout(requireContext());
         layout.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -223,7 +325,7 @@ public class ProfileFragment extends Fragment {
 
                     if (binding == null) return;
 
-                    if (!current.equals(stored)) {
+                    if (!HashUtils.hashPassword(current).equals(stored)) {
                         Snackbar.make(binding.getRoot(), "Current password is incorrect", Snackbar.LENGTH_SHORT).show();
                         return;
                     }
@@ -231,7 +333,7 @@ public class ProfileFragment extends Fragment {
                         Snackbar.make(binding.getRoot(), "New password must be at least 6 characters", Snackbar.LENGTH_SHORT).show();
                         return;
                     }
-                    prefs.edit().putString(LoginActivity.KEY_PASSWORD, newPwd).apply();
+                    prefs.edit().putString(LoginActivity.KEY_PASSWORD, HashUtils.hashPassword(newPwd)).apply();
                     Snackbar.make(binding.getRoot(), "Password updated!", Snackbar.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancel", null)

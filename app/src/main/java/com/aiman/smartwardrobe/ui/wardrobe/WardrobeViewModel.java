@@ -108,6 +108,17 @@ public class WardrobeViewModel extends ViewModel {
     private final MutableLiveData<Boolean> isWeatherLoading;
     private final MutableLiveData<List<String>> allowedCategoriesByWeather;
 
+    // Sorting and Favorites State
+    public enum SortOrder {
+        NEWEST,
+        ALPHABETICAL,
+        PRICE_HIGH,
+        PRICE_LOW
+    }
+    private SortOrder currentSortOrder = SortOrder.NEWEST;
+    private boolean isFavoritesOnly = false;
+    private final MutableLiveData<java.util.Map<String, Integer>> categoryCounts;
+
     // =========================================================================
     // RXJAVA SUBSCRIPTION MANAGEMENT
     // =========================================================================
@@ -147,11 +158,13 @@ public class WardrobeViewModel extends ViewModel {
         this.locationName = new MutableLiveData<>("");
         this.isWeatherLoading = new MutableLiveData<>(false);
         this.allowedCategoriesByWeather = new MutableLiveData<>(null);
+        this.categoryCounts = new MutableLiveData<>(new java.util.HashMap<>());
         this.compositeDisposable = new CompositeDisposable();
 
         // Start observing data from the database
         loadAllItems();
         loadCategories();
+        startObservingAllItemsForCounts();
     }
 
     // =========================================================================
@@ -208,6 +221,14 @@ public class WardrobeViewModel extends ViewModel {
         return allowedCategoriesByWeather;
     }
 
+    public LiveData<java.util.Map<String, Integer>> getCategoryCounts() {
+        return categoryCounts;
+    }
+
+    public boolean isFavoritesOnly() {
+        return isFavoritesOnly;
+    }
+
     // =========================================================================
     // PUBLIC API — Actions
     // =========================================================================
@@ -234,6 +255,27 @@ public class WardrobeViewModel extends ViewModel {
     public void setSearchQuery(String query) {
         currentSearchQuery = query != null ? query.trim() : "";
         reloadItems();
+    }
+
+    public void setSortOrder(SortOrder sortOrder) {
+        this.currentSortOrder = sortOrder;
+        reloadItems();
+    }
+
+    public void setFavoritesOnly(boolean favoritesOnly) {
+        this.isFavoritesOnly = favoritesOnly;
+        reloadItems();
+    }
+
+    public void toggleFavorite(WardrobeItem item) {
+        item.setFavorite(!item.isFavorite());
+        Disposable disposable = repository.updateItem(item)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> { /* Database update triggers Flowable refresh */ },
+                        Throwable::printStackTrace
+                );
+        compositeDisposable.add(disposable);
     }
 
     /**
@@ -278,6 +320,18 @@ public class WardrobeViewModel extends ViewModel {
         compositeDisposable.add(disposable);
     }
 
+    public void insertItem(WardrobeItem item) {
+        Disposable disposable = repository.insertItem(item)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> { /* Success — Flowable auto-refreshes the list */ },
+                        throwable -> {
+                            throwable.printStackTrace();
+                        }
+                );
+        compositeDisposable.add(disposable);
+    }
+
     // =========================================================================
     // PRIVATE — Data Loading Methods
     // =========================================================================
@@ -290,7 +344,7 @@ public class WardrobeViewModel extends ViewModel {
         currentItemsDisposable = repository.getAllItems()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        items -> wardrobeItems.setValue(filterItemsByWeather(items)),
+                        items -> wardrobeItems.setValue(filterAndSortItems(items)),
                         throwable -> {
                             throwable.printStackTrace();
                             wardrobeItems.setValue(new ArrayList<>());
@@ -308,7 +362,7 @@ public class WardrobeViewModel extends ViewModel {
         currentItemsDisposable = repository.getItemsByCategory(category)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        items -> wardrobeItems.setValue(filterItemsByWeather(items)),
+                        items -> wardrobeItems.setValue(filterAndSortItems(items)),
                         throwable -> {
                             throwable.printStackTrace();
                             wardrobeItems.setValue(new ArrayList<>());
@@ -343,7 +397,7 @@ public class WardrobeViewModel extends ViewModel {
         currentItemsDisposable = repository.searchItems(query)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        items -> wardrobeItems.setValue(filterItemsByWeather(items)),
+                        items -> wardrobeItems.setValue(filterAndSortItems(items)),
                         throwable -> {
                             throwable.printStackTrace();
                             wardrobeItems.setValue(new ArrayList<>());
@@ -357,23 +411,81 @@ public class WardrobeViewModel extends ViewModel {
     // =========================================================================
 
     /**
-     * Helper to filter wardrobe items in-memory based on weather allowed categories.
+     * Helper to filter wardrobe items in-memory based on weather allowed categories,
+     * favorites filter, and then sort them accordingly.
      */
-    private List<WardrobeItem> filterItemsByWeather(List<WardrobeItem> originalList) {
+    private List<WardrobeItem> filterAndSortItems(List<WardrobeItem> originalList) {
+        if (originalList == null) return new ArrayList<>();
+
         List<String> allowedCats = allowedCategoriesByWeather.getValue();
-        if (allowedCats == null || allowedCats.isEmpty()) {
-            return originalList;
-        }
-        List<WardrobeItem> filteredList = new ArrayList<>();
+        List<WardrobeItem> list = new ArrayList<>();
+
+        // 1. Filter by Weather and Favorites
         for (WardrobeItem item : originalList) {
-            for (String allowedCat : allowedCats) {
-                if (item.getCategory().equalsIgnoreCase(allowedCat)) {
-                    filteredList.add(item);
-                    break;
-                }
+            // Check favorites filter
+            if (isFavoritesOnly && !item.isFavorite()) {
+                continue;
             }
+            // Check weather filter
+            if (allowedCats != null && !allowedCats.isEmpty()) {
+                boolean match = false;
+                for (String allowedCat : allowedCats) {
+                    if (item.getCategory().equalsIgnoreCase(allowedCat)) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match) continue;
+            }
+            list.add(item);
         }
-        return filteredList;
+
+        // 2. Sort the items
+        switch (currentSortOrder) {
+            case ALPHABETICAL:
+                list.sort((o1, o2) -> {
+                    String c1 = o1.getCategory() != null ? o1.getCategory() : "";
+                    String c2 = o2.getCategory() != null ? o2.getCategory() : "";
+                    return c1.compareToIgnoreCase(c2);
+                });
+                break;
+            case PRICE_HIGH:
+                list.sort((o1, o2) -> Double.compare(o2.getPurchasePrice(), o1.getPurchasePrice()));
+                break;
+            case PRICE_LOW:
+                list.sort((o1, o2) -> Double.compare(o1.getPurchasePrice(), o2.getPurchasePrice()));
+                break;
+            case NEWEST:
+            default:
+                list.sort((o1, o2) -> Long.compare(o2.getDateAdded(), o1.getDateAdded()));
+                break;
+        }
+        return list;
+    }
+
+    /**
+     * Start observing all items in database to build and cache category count stats dynamically.
+     */
+    private void startObservingAllItemsForCounts() {
+        Disposable disposable = repository.getAllItems()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        items -> {
+                            java.util.Map<String, Integer> counts = new java.util.HashMap<>();
+                            int favCount = 0;
+                            for (WardrobeItem item : items) {
+                                String cat = item.getCategory();
+                                counts.put(cat, counts.getOrDefault(cat, 0) + 1);
+                                if (item.isFavorite()) {
+                                    favCount++;
+                                }
+                            }
+                            counts.put("Favorites ❤️", favCount);
+                            categoryCounts.setValue(counts);
+                        },
+                        Throwable::printStackTrace
+                );
+        compositeDisposable.add(disposable);
     }
 
     /**

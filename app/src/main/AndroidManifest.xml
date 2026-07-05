@@ -25,6 +25,9 @@
     <!-- ACCESS_FINE_LOCATION: Get precise location for weather data -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
+    <!-- POST_NOTIFICATIONS: Required on Android 13+ to post notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- READ_MEDIA_IMAGES: Required on Android 13+ (API 33) to pick images
          from the device gallery. Replaces READ_EXTERNAL_STORAGE. -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -85,6 +88,21 @@
             android:exported="false"
             android:label="@string/title_add_item"
             android:parentActivityName=".ui.MainActivity" />
+
+        <!-- DailyReminderReceiver: Listens for daily alarm broadcasts to trigger notifications -->
+        <receiver
+            android:name=".ui.auth.DailyReminderReceiver"
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.aiman.smartwardrobe.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 </manifest>

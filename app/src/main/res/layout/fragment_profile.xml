@@ -337,6 +337,68 @@
                     android:textColor="@color/accent_teal"
                     android:letterSpacing="0.1" />
 
+                 <!-- Weather API Key Settings -->
+                <LinearLayout
+                    android:id="@+id/item_weather_api_key"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        app:cardCornerRadius="10dp"
+                        app:cardElevation="0dp"
+                        app:cardBackgroundColor="@color/accent_teal_muted">
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_analytics"
+                            app:tint="@color/accent_teal"
+                            android:contentDescription="Weather API Key" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="14dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Weather API Key"
+                            android:textSize="15sp"
+                            android:textColor="@color/on_surface" />
+
+                        <TextView
+                            android:id="@+id/text_api_key_subtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tap to configure key"
+                            android:textSize="11sp"
+                            android:textColor="@color/on_surface_variant" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="Configure Key"
+                        app:tint="@color/on_surface_variant" />
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="@color/surface_card_stroke" />
+
                 <!-- Notifications Toggle -->
                 <LinearLayout
                     android:layout_width="match_parent"

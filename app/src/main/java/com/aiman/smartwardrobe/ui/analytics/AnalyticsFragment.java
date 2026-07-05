@@ -249,10 +249,21 @@ public class AnalyticsFragment extends Fragment {
     // =========================================================================
     // UI BUILDERS
     // =========================================================================
-
     private void buildCategoryBars(@Nullable List<CategoryCount> distribution) {
         if (binding == null)
             return;
+
+        // Build and bind canvas donut chart slices
+        List<PieChartView.Slice> slices = new ArrayList<>();
+        if (distribution != null) {
+            for (CategoryCount cc : distribution) {
+                String category = cc.getCategory();
+                int count = cc.getCount();
+                int color = android.graphics.Color.parseColor(getCategoryColor(category));
+                slices.add(new PieChartView.Slice(category, count, color));
+            }
+        }
+        binding.pieChartView.setData(slices);
 
         GridLayout container = binding.gridCategoryBars;
         container.removeAllViews();

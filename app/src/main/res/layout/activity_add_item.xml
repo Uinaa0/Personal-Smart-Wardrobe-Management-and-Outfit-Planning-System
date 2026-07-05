@@ -115,6 +115,26 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- ====================================================
+                 SECTION 1.5: Item Name
+                 ==================================================== -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:hint="Item Name (Optional)"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapWords"
+                    android:maxLines="1" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- ====================================================
                  SECTION 2: Category Dropdown
                  ==================================================== -->
             <com.google.android.material.textfield.TextInputLayout
