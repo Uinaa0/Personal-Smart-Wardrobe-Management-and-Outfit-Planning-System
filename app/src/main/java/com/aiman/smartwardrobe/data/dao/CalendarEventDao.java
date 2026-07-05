@@ -7,6 +7,7 @@ import androidx.room.Query;
 
 import com.aiman.smartwardrobe.data.entity.CalendarEvent;
 import com.aiman.smartwardrobe.data.entity.ItemWearStats;
+import com.aiman.smartwardrobe.data.entity.WearHistoryEntry;
 
 import java.util.List;
 
@@ -171,4 +172,24 @@ public interface CalendarEventDao {
            "ORDER BY wear_count ASC " +
            "LIMIT :limit")
     Single<List<ItemWearStats>> getLeastWornItems(int limit);
+
+    // =========================================================================
+    // WEAR HISTORY QUERY (Wear History Feature)
+    // =========================================================================
+
+    /**
+     * Get a chronological log of wear events joined with wardrobe item metadata.
+     * Used in the Analytics Dashboard "Wear History" tab to display when
+     * each item was worn, along with item details (category, fabric, image).
+     *
+     * @param limit Maximum number of history entries to return
+     * @return Single emitting the list of wear history entries
+     */
+    @Query("SELECT c.event_id, c.item_id, c.date_worn, " +
+           "w.category, w.fabric_type, w.color_hex, w.image_path " +
+           "FROM calendar_event c " +
+           "INNER JOIN wardrobe_item w ON c.item_id = w.item_id " +
+           "ORDER BY c.date_worn DESC " +
+           "LIMIT :limit")
+    Single<List<WearHistoryEntry>> getWearHistory(int limit);
 }

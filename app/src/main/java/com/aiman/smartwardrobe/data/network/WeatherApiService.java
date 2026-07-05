@@ -31,4 +31,15 @@ public interface WeatherApiService {
             @Query("units") String units,
             @Query("appid") String apiKey
     );
+
+    /**
+     * Retrieve current weather details by latitude and longitude.
+     */
+    @GET("weather")
+    Single<WeatherResponse> getCurrentWeatherByCoords(
+            @Query("lat") double latitude,
+            @Query("lon") double longitude,
+            @Query("units") String units,
+            @Query("appid") String apiKey
+    );
 }

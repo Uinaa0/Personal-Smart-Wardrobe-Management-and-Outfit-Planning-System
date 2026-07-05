@@ -362,8 +362,8 @@
                             android:id="@+id/text_tab_most_worn"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Most Worn Items"
-                            android:textSize="16sp"
+                            android:text="Most Worn"
+                            android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="#38B2AC" />
 
@@ -372,7 +372,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="2.5dp"
                             android:layout_marginTop="8dp"
-                            android:layout_marginHorizontal="8dp"
+                            android:layout_marginHorizontal="4dp"
                             android:background="#38B2AC"
                             android:visibility="visible" />
 
@@ -393,8 +393,8 @@
                             android:id="@+id/text_tab_least_worn"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Least Worn Items"
-                            android:textSize="16sp"
+                            android:text="Least Worn"
+                            android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="#8A9AA4" />
 
@@ -403,7 +403,38 @@
                             android:layout_width="match_parent"
                             android:layout_height="2.5dp"
                             android:layout_marginTop="8dp"
-                            android:layout_marginHorizontal="8dp"
+                            android:layout_marginHorizontal="4dp"
+                            android:background="#38B2AC"
+                            android:visibility="invisible" />
+
+                    </LinearLayout>
+
+                    <!-- Tab 3: Wear History -->
+                    <LinearLayout
+                        android:id="@+id/tab_wear_history"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/text_tab_wear_history"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="History"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#8A9AA4" />
+
+                        <View
+                            android:id="@+id/indicator_tab_wear_history"
+                            android:layout_width="match_parent"
+                            android:layout_height="2.5dp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginHorizontal="4dp"
                             android:background="#38B2AC"
                             android:visibility="invisible" />
 
@@ -411,7 +442,7 @@
 
                 </LinearLayout>
 
-                <!-- List container for items (dynamically populated) -->
+                <!-- List container for Most/Least Worn items (dynamically populated) -->
                 <LinearLayout
                     android:id="@+id/layout_worn_items_list"
                     android:layout_width="match_parent"
@@ -419,6 +450,16 @@
                     android:orientation="vertical"
                     android:paddingHorizontal="16dp"
                     android:paddingBottom="24dp" />
+
+                <!-- List container for Wear History (dynamically populated) -->
+                <LinearLayout
+                    android:id="@+id/layout_wear_history_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="24dp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 

@@ -19,13 +19,16 @@ import androidx.lifecycle.ViewModelProvider;
 import com.aiman.smartwardrobe.R;
 import com.aiman.smartwardrobe.data.entity.CategoryCount;
 import com.aiman.smartwardrobe.data.entity.ItemWearStats;
+import com.aiman.smartwardrobe.data.entity.WearHistoryEntry;
 import com.aiman.smartwardrobe.databinding.FragmentAnalyticsBinding;
 import com.aiman.smartwardrobe.ui.MainActivity;
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,10 +42,15 @@ public class AnalyticsFragment extends Fragment {
     private FragmentAnalyticsBinding binding;
     private AnalyticsViewModel viewModel;
 
-    // State for tabs
-    private boolean isMostWornTabSelected = true;
+    // State for tabs: 0 = Most Worn, 1 = Least Worn, 2 = Wear History
+    private static final int TAB_MOST_WORN = 0;
+    private static final int TAB_LEAST_WORN = 1;
+    private static final int TAB_WEAR_HISTORY = 2;
+    private int selectedTab = TAB_MOST_WORN;
+
     private List<ItemWearStats> currentMostWornList = new ArrayList<>();
     private List<ItemWearStats> currentLeastWornList = new ArrayList<>();
+    private List<WearHistoryEntry> currentWearHistoryList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -103,36 +111,64 @@ public class AnalyticsFragment extends Fragment {
 
     private void setupTabClickListeners() {
         binding.tabMostWorn.setOnClickListener(v -> {
-            if (!isMostWornTabSelected) {
-                isMostWornTabSelected = true;
+            if (selectedTab != TAB_MOST_WORN) {
+                selectedTab = TAB_MOST_WORN;
                 updateTabStyles();
+                showWornItemsList();
                 buildItemList(binding.layoutWornItemsList, currentMostWornList);
             }
         });
 
         binding.tabLeastWorn.setOnClickListener(v -> {
-            if (isMostWornTabSelected) {
-                isMostWornTabSelected = false;
+            if (selectedTab != TAB_LEAST_WORN) {
+                selectedTab = TAB_LEAST_WORN;
                 updateTabStyles();
+                showWornItemsList();
                 buildItemList(binding.layoutWornItemsList, currentLeastWornList);
+            }
+        });
+
+        binding.tabWearHistory.setOnClickListener(v -> {
+            if (selectedTab != TAB_WEAR_HISTORY) {
+                selectedTab = TAB_WEAR_HISTORY;
+                updateTabStyles();
+                showWearHistoryList();
+                buildWearHistoryList(currentWearHistoryList);
             }
         });
     }
 
+    /**
+     * Show the worn items list container and hide the wear history container.
+     */
+    private void showWornItemsList() {
+        binding.layoutWornItemsList.setVisibility(View.VISIBLE);
+        binding.layoutWearHistoryList.setVisibility(View.GONE);
+    }
+
+    /**
+     * Show the wear history list container and hide the worn items container.
+     */
+    private void showWearHistoryList() {
+        binding.layoutWornItemsList.setVisibility(View.GONE);
+        binding.layoutWearHistoryList.setVisibility(View.VISIBLE);
+    }
+
     private void updateTabStyles() {
-        if (isMostWornTabSelected) {
-            binding.textTabMostWorn.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary));
-            binding.indicatorTabMostWorn.setVisibility(View.VISIBLE);
+        int activeColor = ContextCompat.getColor(requireContext(), R.color.primary);
+        int inactiveColor = ColorUtils.parseHexColor("#8A9AA4");
 
-            binding.textTabLeastWorn.setTextColor(ColorUtils.parseHexColor("#8A9AA4"));
-            binding.indicatorTabLeastWorn.setVisibility(View.INVISIBLE);
-        } else {
-            binding.textTabLeastWorn.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary));
-            binding.indicatorTabLeastWorn.setVisibility(View.VISIBLE);
+        // Most Worn tab
+        binding.textTabMostWorn.setTextColor(selectedTab == TAB_MOST_WORN ? activeColor : inactiveColor);
+        binding.indicatorTabMostWorn.setVisibility(selectedTab == TAB_MOST_WORN ? View.VISIBLE : View.INVISIBLE);
 
-            binding.textTabMostWorn.setTextColor(ColorUtils.parseHexColor("#8A9AA4"));
-            binding.indicatorTabMostWorn.setVisibility(View.INVISIBLE);
-        }
+        // Least Worn tab
+        binding.textTabLeastWorn.setTextColor(selectedTab == TAB_LEAST_WORN ? activeColor : inactiveColor);
+        binding.indicatorTabLeastWorn.setVisibility(selectedTab == TAB_LEAST_WORN ? View.VISIBLE : View.INVISIBLE);
+
+        // Wear History tab
+        binding.textTabWearHistory.setTextColor(selectedTab == TAB_WEAR_HISTORY ? activeColor : inactiveColor);
+        binding.indicatorTabWearHistory.setVisibility(selectedTab == TAB_WEAR_HISTORY ? View.VISIBLE : View.INVISIBLE);
     }
 
     // =========================================================================
@@ -184,7 +220,7 @@ public class AnalyticsFragment extends Fragment {
             if (binding == null)
                 return;
             currentMostWornList = items != null ? items : new ArrayList<>();
-            if (isMostWornTabSelected) {
+            if (selectedTab == TAB_MOST_WORN) {
                 buildItemList(binding.layoutWornItemsList, currentMostWornList);
             }
         });
@@ -194,8 +230,18 @@ public class AnalyticsFragment extends Fragment {
             if (binding == null)
                 return;
             currentLeastWornList = items != null ? items : new ArrayList<>();
-            if (!isMostWornTabSelected) {
+            if (selectedTab == TAB_LEAST_WORN) {
                 buildItemList(binding.layoutWornItemsList, currentLeastWornList);
+            }
+        });
+
+        // Wear History
+        viewModel.getWearHistory().observe(getViewLifecycleOwner(), entries -> {
+            if (binding == null)
+                return;
+            currentWearHistoryList = entries != null ? entries : new ArrayList<>();
+            if (selectedTab == TAB_WEAR_HISTORY) {
+                buildWearHistoryList(currentWearHistoryList);
             }
         });
     }
@@ -456,6 +502,77 @@ public class AnalyticsFragment extends Fragment {
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    // =========================================================================
+    // WEAR HISTORY LIST BUILDER
+    // =========================================================================
+
+    /**
+     * Build the wear history list from WearHistoryEntry objects.
+     * Each row shows: item thumbnail, title (category + fabric), and formatted date.
+     */
+    private void buildWearHistoryList(@Nullable List<WearHistoryEntry> entries) {
+        if (binding == null) return;
+
+        LinearLayout container = binding.layoutWearHistoryList;
+        container.removeAllViews();
+
+        if (entries == null || entries.isEmpty()) {
+            // Show empty state message
+            TextView emptyText = new TextView(requireContext());
+            emptyText.setText(R.string.wear_history_empty);
+            emptyText.setTextColor(ColorUtils.parseHexColor("#8A9AA4"));
+            emptyText.setTextSize(14);
+            emptyText.setGravity(android.view.Gravity.CENTER);
+            emptyText.setPadding(dpToPx(16), dpToPx(32), dpToPx(16), dpToPx(32));
+            container.addView(emptyText);
+            return;
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+
+        for (WearHistoryEntry entry : entries) {
+            View row = inflater.inflate(R.layout.item_wear_history, container, false);
+
+            // Thumbnail
+            ImageView thumbnail = row.findViewById(R.id.image_history_item);
+            if (entry.getImagePath() != null && !entry.getImagePath().isEmpty()) {
+                Glide.with(this)
+                        .load(new File(entry.getImagePath()))
+                        .placeholder(R.drawable.ic_placeholder_clothing)
+                        .error(R.drawable.ic_placeholder_clothing)
+                        .centerCrop()
+                        .into(thumbnail);
+            } else {
+                thumbnail.setImageResource(R.drawable.ic_placeholder_clothing);
+            }
+
+            // Item title (Category + Fabric)
+            TextView titleText = row.findViewById(R.id.text_history_item_title);
+            String fabric = entry.getFabricType() != null ? entry.getFabricType() : "";
+            String category = entry.getCategory() != null ? entry.getCategory() : "Item";
+            String title = (!fabric.isEmpty() ? fabric + " " : "") + category;
+            titleText.setText(title);
+
+            // Date worn
+            TextView dateText = row.findViewById(R.id.text_history_date);
+            dateText.setText(dateFormat.format(new Date(entry.getDateWorn())));
+
+            // Color dot
+            View colorDot = row.findViewById(R.id.view_history_color_dot);
+            try {
+                GradientDrawable dotDrawable = (GradientDrawable) colorDot.getBackground();
+                if (dotDrawable != null && entry.getColorHex() != null) {
+                    dotDrawable.setColor(android.graphics.Color.parseColor(entry.getColorHex()));
+                }
+            } catch (Exception e) {
+                // Ignore color parse errors
+            }
+
+            container.addView(row);
+        }
     }
 
     /**

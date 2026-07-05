@@ -11,6 +11,7 @@ import com.aiman.smartwardrobe.data.entity.CategoryCount;
 import com.aiman.smartwardrobe.data.entity.ItemWearStats;
 import com.aiman.smartwardrobe.data.entity.StylingOntology;
 import com.aiman.smartwardrobe.data.entity.WardrobeItem;
+import com.aiman.smartwardrobe.data.entity.WearHistoryEntry;
 
 import java.util.List;
 
@@ -386,6 +387,36 @@ public class WardrobeRepository {
      */
     public Single<Integer> getTotalWearCount() {
         return calendarEventDao.getTotalWearCount()
+                .subscribeOn(Schedulers.io());
+    }
+
+    // =========================================================================
+    // SEARCH OPERATIONS (Search Feature)
+    // =========================================================================
+
+    /**
+     * Search wardrobe items by matching category or fabric type.
+     *
+     * @param query The search term
+     * @return Flowable emitting the list of matching items
+     */
+    public Flowable<List<WardrobeItem>> searchItems(String query) {
+        return wardrobeDao.searchItems(query)
+                .subscribeOn(Schedulers.io());
+    }
+
+    // =========================================================================
+    // WEAR HISTORY OPERATIONS (Wear History Feature)
+    // =========================================================================
+
+    /**
+     * Get a chronological log of wear events with item metadata.
+     *
+     * @param limit Maximum number of entries to return
+     * @return Single emitting the list of wear history entries
+     */
+    public Single<List<WearHistoryEntry>> getWearHistory(int limit) {
+        return calendarEventDao.getWearHistory(limit)
                 .subscribeOn(Schedulers.io());
     }
 }

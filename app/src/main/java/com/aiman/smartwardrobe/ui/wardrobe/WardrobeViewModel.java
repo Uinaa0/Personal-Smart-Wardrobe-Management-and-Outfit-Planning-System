@@ -8,8 +8,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.aiman.smartwardrobe.data.entity.StylingOntology;
 import com.aiman.smartwardrobe.data.entity.WardrobeItem;
 import com.aiman.smartwardrobe.data.repository.WardrobeRepository;
+import com.aiman.smartwardrobe.data.network.RetrofitClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +95,19 @@ public class WardrobeViewModel extends ViewModel {
      */
     private final MutableLiveData<String> selectedCategory;
 
+    /**
+     * The current search query text.
+     * Empty string means no search filter is active.
+     */
+    private String currentSearchQuery = "";
+
+    // Weather & Recommendation State (Weather Feature)
+    private final MutableLiveData<Double> currentTemperature;
+    private final MutableLiveData<String> weatherDescription;
+    private final MutableLiveData<String> locationName;
+    private final MutableLiveData<Boolean> isWeatherLoading;
+    private final MutableLiveData<List<String>> allowedCategoriesByWeather;
+
     // =========================================================================
     // RXJAVA SUBSCRIPTION MANAGEMENT
     // =========================================================================
@@ -127,6 +142,11 @@ public class WardrobeViewModel extends ViewModel {
         this.wardrobeItems = new MutableLiveData<>(new ArrayList<>());
         this.categories = new MutableLiveData<>(new ArrayList<>());
         this.selectedCategory = new MutableLiveData<>(null);
+        this.currentTemperature = new MutableLiveData<>(null);
+        this.weatherDescription = new MutableLiveData<>("");
+        this.locationName = new MutableLiveData<>("");
+        this.isWeatherLoading = new MutableLiveData<>(false);
+        this.allowedCategoriesByWeather = new MutableLiveData<>(null);
         this.compositeDisposable = new CompositeDisposable();
 
         // Start observing data from the database
@@ -167,6 +187,27 @@ public class WardrobeViewModel extends ViewModel {
         return selectedCategory;
     }
 
+    // Weather getters
+    public LiveData<Double> getCurrentTemperature() {
+        return currentTemperature;
+    }
+
+    public LiveData<String> getWeatherDescription() {
+        return weatherDescription;
+    }
+
+    public LiveData<String> getLocationName() {
+        return locationName;
+    }
+
+    public LiveData<Boolean> getIsWeatherLoading() {
+        return isWeatherLoading;
+    }
+
+    public LiveData<List<String>> getAllowedCategoriesByWeather() {
+        return allowedCategoriesByWeather;
+    }
+
     // =========================================================================
     // PUBLIC API — Actions
     // =========================================================================
@@ -179,18 +220,42 @@ public class WardrobeViewModel extends ViewModel {
      */
     public void setSelectedCategory(String category) {
         selectedCategory.setValue(category);
+        // Clear search when changing category
+        currentSearchQuery = "";
+        reloadItems();
+    }
 
+    /**
+     * Set the search query. Triggers a search query against the database.
+     * When a search query is active, it takes priority over category filtering.
+     *
+     * @param query The search text, or empty string to clear the search
+     */
+    public void setSearchQuery(String query) {
+        currentSearchQuery = query != null ? query.trim() : "";
+        reloadItems();
+    }
+
+    /**
+     * Reload items based on the current search query and category filter.
+     * Search takes priority — if a search query is active, category filter
+     * is ignored.
+     */
+    private void reloadItems() {
         // Dispose the previous items subscription before creating a new one
         if (currentItemsDisposable != null && !currentItemsDisposable.isDisposed()) {
             currentItemsDisposable.dispose();
         }
 
-        if (category == null) {
+        if (!currentSearchQuery.isEmpty()) {
+            // Search mode — search across all categories
+            loadSearchResults(currentSearchQuery);
+        } else if (selectedCategory.getValue() == null) {
             // No filter — load all items
             loadAllItems();
         } else {
             // Filter by category
-            loadItemsByCategory(category);
+            loadItemsByCategory(selectedCategory.getValue());
         }
     }
 
@@ -225,7 +290,7 @@ public class WardrobeViewModel extends ViewModel {
         currentItemsDisposable = repository.getAllItems()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        items -> wardrobeItems.setValue(items),
+                        items -> wardrobeItems.setValue(filterItemsByWeather(items)),
                         throwable -> {
                             throwable.printStackTrace();
                             wardrobeItems.setValue(new ArrayList<>());
@@ -243,7 +308,7 @@ public class WardrobeViewModel extends ViewModel {
         currentItemsDisposable = repository.getItemsByCategory(category)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        items -> wardrobeItems.setValue(items),
+                        items -> wardrobeItems.setValue(filterItemsByWeather(items)),
                         throwable -> {
                             throwable.printStackTrace();
                             wardrobeItems.setValue(new ArrayList<>());
@@ -267,6 +332,134 @@ public class WardrobeViewModel extends ViewModel {
                         }
                 );
         compositeDisposable.add(disposable);
+    }
+
+    /**
+     * Subscribe to search results matching the given query.
+     *
+     * @param query The search term to match against category and fabric type
+     */
+    private void loadSearchResults(String query) {
+        currentItemsDisposable = repository.searchItems(query)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        items -> wardrobeItems.setValue(filterItemsByWeather(items)),
+                        throwable -> {
+                            throwable.printStackTrace();
+                            wardrobeItems.setValue(new ArrayList<>());
+                        }
+                );
+        compositeDisposable.add(currentItemsDisposable);
+    }
+
+    // =========================================================================
+    // WEATHER OPERATIONS (Weather Feature)
+    // =========================================================================
+
+    /**
+     * Helper to filter wardrobe items in-memory based on weather allowed categories.
+     */
+    private List<WardrobeItem> filterItemsByWeather(List<WardrobeItem> originalList) {
+        List<String> allowedCats = allowedCategoriesByWeather.getValue();
+        if (allowedCats == null || allowedCats.isEmpty()) {
+            return originalList;
+        }
+        List<WardrobeItem> filteredList = new ArrayList<>();
+        for (WardrobeItem item : originalList) {
+            for (String allowedCat : allowedCats) {
+                if (item.getCategory().equalsIgnoreCase(allowedCat)) {
+                    filteredList.add(item);
+                    break;
+                }
+            }
+        }
+        return filteredList;
+    }
+
+    /**
+     * Fetch current temperature for a city from OpenWeatherMap API using Retrofit.
+     */
+    public io.reactivex.rxjava3.core.Single<Double> fetchWeatherByCityName(String city, String apiKey) {
+        isWeatherLoading.postValue(true);
+        return RetrofitClient.getInstance().getWeatherApiService()
+                .getCurrentWeather(city, "metric", apiKey)
+                .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSuccess(response -> {
+                    isWeatherLoading.postValue(false);
+                    String desc = (response.getWeather() != null && !response.getWeather().isEmpty()) 
+                            ? response.getWeather().get(0).getDescription() : "Clear";
+                    setTemperatureAndFilter(response.getMain().getTemp(), desc, response.getCityName());
+                })
+                .doOnError(throwable -> isWeatherLoading.postValue(false))
+                .map(response -> response.getMain().getTemp());
+    }
+
+    /**
+     * Fetch current temperature for coordinates from OpenWeatherMap API using Retrofit.
+     */
+    public io.reactivex.rxjava3.core.Single<Double> fetchWeatherByCoords(double lat, double lon, String apiKey) {
+        isWeatherLoading.postValue(true);
+        return RetrofitClient.getInstance().getWeatherApiService()
+                .getCurrentWeatherByCoords(lat, lon, "metric", apiKey)
+                .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSuccess(response -> {
+                    isWeatherLoading.postValue(false);
+                    String desc = (response.getWeather() != null && !response.getWeather().isEmpty()) 
+                            ? response.getWeather().get(0).getDescription() : "Clear";
+                    setTemperatureAndFilter(response.getMain().getTemp(), desc, response.getCityName());
+                })
+                .doOnError(throwable -> isWeatherLoading.postValue(false))
+                .map(response -> response.getMain().getTemp());
+    }
+
+    /**
+     * Set temperature, update allowed categories from database rules, and refresh grid.
+     */
+    public void setTemperatureAndFilter(double temp, String description, String location) {
+        currentTemperature.postValue(temp);
+        weatherDescription.postValue(description);
+        locationName.postValue(location);
+
+        Disposable disposable = repository.getRulesForTemperature(temp)
+                .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        rules -> {
+                            List<String> allowedCats = new ArrayList<>();
+                            for (StylingOntology rule : rules) {
+                                if (rule.getAllowedCategories() != null) {
+                                    String[] parts = rule.getAllowedCategories().split(",");
+                                    for (String part : parts) {
+                                        String trimmed = part.trim();
+                                        if (!trimmed.isEmpty() && !allowedCats.contains(trimmed)) {
+                                            allowedCats.add(trimmed);
+                                        }
+                                    }
+                                }
+                            }
+                            allowedCategoriesByWeather.setValue(allowedCats);
+                            reloadItems();
+                        },
+                        throwable -> {
+                            throwable.printStackTrace();
+                            allowedCategoriesByWeather.setValue(null);
+                            reloadItems();
+                        }
+                );
+        compositeDisposable.add(disposable);
+    }
+
+    /**
+     * Reset/clear the weather filter to show all items again.
+     */
+    public void clearWeatherFilter() {
+        currentTemperature.postValue(null);
+        weatherDescription.postValue("");
+        locationName.postValue("");
+        allowedCategoriesByWeather.setValue(null);
+        reloadItems();
     }
 
     // =========================================================================

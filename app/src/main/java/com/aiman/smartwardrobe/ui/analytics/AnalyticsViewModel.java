@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.aiman.smartwardrobe.data.entity.CategoryCount;
 import com.aiman.smartwardrobe.data.entity.ItemWearStats;
+import com.aiman.smartwardrobe.data.entity.WearHistoryEntry;
 import com.aiman.smartwardrobe.data.repository.WardrobeRepository;
 
 import java.util.ArrayList;
@@ -64,6 +65,9 @@ public class AnalyticsViewModel extends ViewModel {
     /** Maximum number of items to show in the most/least worn lists. */
     private static final int TOP_ITEMS_LIMIT = 5;
 
+    /** Maximum number of entries to show in the wear history list. */
+    private static final int WEAR_HISTORY_LIMIT = 50;
+
     // =========================================================================
     // DATA SOURCES
     // =========================================================================
@@ -81,6 +85,7 @@ public class AnalyticsViewModel extends ViewModel {
     private final MutableLiveData<List<CategoryCount>> categoryDistribution;
     private final MutableLiveData<List<ItemWearStats>> mostWornItems;
     private final MutableLiveData<List<ItemWearStats>> leastWornItems;
+    private final MutableLiveData<List<WearHistoryEntry>> wearHistory;
 
     // =========================================================================
     // RXJAVA SUBSCRIPTION MANAGEMENT
@@ -105,6 +110,7 @@ public class AnalyticsViewModel extends ViewModel {
         this.categoryDistribution = new MutableLiveData<>(new ArrayList<>());
         this.mostWornItems = new MutableLiveData<>(new ArrayList<>());
         this.leastWornItems = new MutableLiveData<>(new ArrayList<>());
+        this.wearHistory = new MutableLiveData<>(new ArrayList<>());
         this.compositeDisposable = new CompositeDisposable();
 
         // Load all analytics data
@@ -139,6 +145,10 @@ public class AnalyticsViewModel extends ViewModel {
         return leastWornItems;
     }
 
+    public LiveData<List<WearHistoryEntry>> getWearHistory() {
+        return wearHistory;
+    }
+
     // =========================================================================
     // PUBLIC API — Actions
     // =========================================================================
@@ -165,6 +175,7 @@ public class AnalyticsViewModel extends ViewModel {
         loadCategoryDistribution();
         loadMostWornItems();
         loadLeastWornItems();
+        loadWearHistory();
     }
 
     /**
@@ -276,6 +287,23 @@ public class AnalyticsViewModel extends ViewModel {
         } else {
             averageCpw.setValue(0.0);
         }
+    }
+
+    /**
+     * Load the wear history log — a chronological list of wear events
+     * with joined item metadata.
+     */
+    private void loadWearHistory() {
+        Disposable disposable = repository.getWearHistory(WEAR_HISTORY_LIMIT)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        entries -> wearHistory.setValue(entries),
+                        throwable -> {
+                            throwable.printStackTrace();
+                            wearHistory.setValue(new ArrayList<>());
+                        }
+                );
+        compositeDisposable.add(disposable);
     }
 
     // =========================================================================

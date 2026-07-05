@@ -252,4 +252,18 @@ public interface WardrobeDao {
      */
     @Query("SELECT category, COUNT(*) AS count FROM wardrobe_item GROUP BY category ORDER BY count DESC")
     Single<List<CategoryCount>> getCategoryDistribution();
+
+    // =========================================================================
+    // SEARCH QUERY (Search Feature)
+    // =========================================================================
+
+    /**
+     * Search wardrobe items by matching category or fabric type.
+     *
+     * @param query The search term to match against category and fabric_type
+     * @return Flowable emitting the list of matching items
+     */
+    @Query("SELECT * FROM wardrobe_item WHERE category LIKE '%' || :query || '%' " +
+           "OR fabric_type LIKE '%' || :query || '%' ORDER BY date_added DESC")
+    Flowable<List<WardrobeItem>> searchItems(String query);
 }

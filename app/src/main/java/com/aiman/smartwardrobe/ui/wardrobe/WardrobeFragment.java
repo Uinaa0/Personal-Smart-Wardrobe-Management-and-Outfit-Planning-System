@@ -2,6 +2,8 @@ package com.aiman.smartwardrobe.ui.wardrobe;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +21,20 @@ import com.aiman.smartwardrobe.databinding.FragmentWardrobeBinding;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
+import android.util.TypedValue;
+import android.graphics.Color;
+import android.content.res.ColorStateList;
+import android.widget.TextView;
+import android.widget.ImageView;
 
 /**
  * ============================================================================
@@ -75,6 +91,21 @@ public class WardrobeFragment extends Fragment
     /** Number of columns in the wardrobe grid */
     private static final int GRID_SPAN_COUNT = 2;
 
+    // Weather & Location Configuration (Weather Feature)
+    private static final String OWM_API_KEY = ""; // Insert OpenWeatherMap API Key here
+    private static final String DEFAULT_CITY = "Kuala Lumpur";
+
+    private final ActivityResultLauncher<String[]> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                Boolean fineGranted = result.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false);
+                Boolean coarseGranted = result.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false);
+                if ((fineGranted != null && fineGranted) || (coarseGranted != null && coarseGranted)) {
+                    fetchLocalLocationAndWeather();
+                } else {
+                    fetchWeatherByCity(DEFAULT_CITY);
+                }
+            });
+
     // =========================================================================
     // FRAGMENT LIFECYCLE
     // =========================================================================
@@ -102,7 +133,10 @@ public class WardrobeFragment extends Fragment
         setupViewModel();
         setupRecyclerView();
         setupFab();
+        setupSearch();
+        setupWeatherStatus();
         observeData();
+        checkLocationPermissionsAndStart();
     }
 
     /**
@@ -169,6 +203,25 @@ public class WardrobeFragment extends Fragment
         });
     }
 
+    /**
+     * Set up the search bar with a TextWatcher that triggers
+     * a database search on every keystroke.
+     */
+    private void setupSearch() {
+        binding.editSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                viewModel.setSearchQuery(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+
     // =========================================================================
     // DATA OBSERVERS — Reactive UI Updates
     // =========================================================================
@@ -212,6 +265,53 @@ public class WardrobeFragment extends Fragment
             for (String category : categories) {
                 Chip chip = createFilterChip(category, false);
                 binding.chipGroupCategories.addView(chip);
+            }
+        });
+
+        // Observe weather loading state
+        viewModel.getIsWeatherLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            if (binding == null) return;
+            if (isLoading != null && isLoading) {
+                binding.cardWeatherStatus.setVisibility(View.VISIBLE);
+                binding.textWardrobeWeatherTitle.setText("Loading local weather...");
+                binding.textWardrobeWeatherAlert.setText("Fetching current location temperature...");
+            }
+        });
+
+        // Observe weather info updates
+        viewModel.getCurrentTemperature().observe(getViewLifecycleOwner(), temp -> {
+            if (binding == null) return;
+            if (temp == null) {
+                binding.cardWeatherStatus.setVisibility(View.GONE);
+                return;
+            }
+
+            binding.cardWeatherStatus.setVisibility(View.VISIBLE);
+            String desc = viewModel.getWeatherDescription().getValue();
+            String city = viewModel.getLocationName().getValue();
+
+            // Title displaying: e.g. "Kuala Lumpur: 31.2°C, Light rain"
+            String formattedTemp = String.format(java.util.Locale.getDefault(), "%.1f°C", temp);
+            binding.textWardrobeWeatherTitle.setText(city + ": " + formattedTemp + " (" + desc + ")");
+
+            // Red warning styling if temperature is too hot (>= 28°C)
+            if (temp >= 28.0) {
+                binding.cardWeatherStatus.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#C53030")));
+                binding.cardWeatherStatus.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#9B2C2C")));
+                binding.textWardrobeWeatherTitle.setTextColor(Color.WHITE);
+                binding.textWardrobeWeatherAlert.setTextColor(Color.WHITE);
+                binding.imageWardrobeWeatherIcon.setImageTintList(ColorStateList.valueOf(Color.WHITE));
+                binding.textWardrobeWeatherAlert.setText("🚨 It is too hot today! Showing lightweight clothes.");
+            } else {
+                // Return to normal primaryContainer theme styling
+                int primaryContainer = getThemeColor(com.google.android.material.R.attr.colorPrimaryContainer);
+                int onPrimaryContainer = getThemeColor(com.google.android.material.R.attr.colorOnPrimaryContainer);
+
+                binding.cardWeatherStatus.setCardBackgroundColor(ColorStateList.valueOf(primaryContainer));
+                binding.cardWeatherStatus.setStrokeColor(ColorStateList.valueOf(primaryContainer));
+                binding.textWardrobeWeatherTitle.setTextColor(onPrimaryContainer);
+                binding.textWardrobeWeatherAlert.setTextColor(onPrimaryContainer);
+                binding.textWardrobeWeatherAlert.setText("Weather-appropriate wardrobe items are automatically filtered.");
             }
         });
     }
@@ -265,16 +365,13 @@ public class WardrobeFragment extends Fragment
 
     /**
      * Handle tap on a wardrobe item card.
-     * Currently shows a Snackbar with item details.
-     * In a full implementation, this would open an item detail screen.
+     * Launches AddItemActivity in edit mode with the item's ID.
      */
     @Override
     public void onItemClick(WardrobeItem item) {
-        Snackbar.make(
-                binding.getRoot(),
-                item.getCategory() + " — " + item.getFabricType(),
-                Snackbar.LENGTH_SHORT
-        ).show();
+        Intent intent = new Intent(requireContext(), AddItemActivity.class);
+        intent.putExtra(AddItemActivity.EXTRA_ITEM_ID, item.getItemId());
+        startActivity(intent);
     }
 
     /**
@@ -297,6 +394,139 @@ public class WardrobeFragment extends Fragment
                     ).show();
                 })
                 .show();
+    }
+
+    // =========================================================================
+    // WEATHER STATUS INTERACTION (Weather Feature)
+    // =========================================================================
+
+    private void setupWeatherStatus() {
+        // Tapping the weather card opens the simulator dialog so the user/examiner
+        // can easily test how the wardrobe grid automatically filters by temperature
+        binding.cardWeatherStatus.setOnClickListener(v -> showWeatherSimulatorDialog());
+    }
+
+    private void checkLocationPermissionsAndStart() {
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) 
+                == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            fetchLocalLocationAndWeather();
+        } else {
+            locationPermissionLauncher.launch(new String[]{
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+            });
+        }
+    }
+
+    private void fetchLocalLocationAndWeather() {
+        try {
+            LocationManager locationManager = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
+            if (locationManager == null) {
+                fetchWeatherByCity(DEFAULT_CITY);
+                return;
+            }
+
+            boolean isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+            if (!isGpsEnabled && !isNetworkEnabled) {
+                fetchWeatherByCity(DEFAULT_CITY);
+                return;
+            }
+
+            if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) 
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                fetchWeatherByCity(DEFAULT_CITY);
+                return;
+            }
+
+            Location location = null;
+            if (isNetworkEnabled) {
+                location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            }
+            if (location == null && isGpsEnabled) {
+                location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            }
+
+            if (location != null) {
+                fetchWeatherByCoords(location.getLatitude(), location.getLongitude());
+            } else {
+                String provider = isNetworkEnabled ? LocationManager.NETWORK_PROVIDER : LocationManager.GPS_PROVIDER;
+                locationManager.requestSingleUpdate(provider, new LocationListener() {
+                    @Override
+                    public void onLocationChanged(@NonNull Location loc) {
+                        fetchWeatherByCoords(loc.getLatitude(), loc.getLongitude());
+                    }
+                    @Override
+                    public void onStatusChanged(String provider, int status, Bundle extras) {}
+                    @Override
+                    public void onProviderEnabled(@NonNull String provider) {}
+                    @Override
+                    public void onProviderDisabled(@NonNull String provider) {}
+                }, android.os.Looper.getMainLooper());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            fetchWeatherByCity(DEFAULT_CITY);
+        }
+    }
+
+    private void fetchWeatherByCity(String city) {
+        if (OWM_API_KEY.isEmpty()) {
+            // Default simulator start since key is empty
+            viewModel.setTemperatureAndFilter(32.0, "Sunny", "Kuala Lumpur (Simulated)");
+        } else {
+            io.reactivex.rxjava3.disposables.Disposable disposable = viewModel.fetchWeatherByCityName(city, OWM_API_KEY)
+                    .subscribe(
+                            temp -> {},
+                            throwable -> {
+                                throwable.printStackTrace();
+                                // Fallback to simulated hot weather on failure
+                                viewModel.setTemperatureAndFilter(32.0, "Sunny", "Kuala Lumpur (Simulated)");
+                            }
+                    );
+            // ViewModel takes care of CompositeDisposable, but we can track one-off failures
+        }
+    }
+
+    private void fetchWeatherByCoords(double lat, double lon) {
+        if (OWM_API_KEY.isEmpty()) {
+            viewModel.setTemperatureAndFilter(32.0, "Sunny", "Current Location (Simulated)");
+        } else {
+            io.reactivex.rxjava3.disposables.Disposable disposable = viewModel.fetchWeatherByCoords(lat, lon, OWM_API_KEY)
+                    .subscribe(
+                            temp -> {},
+                            throwable -> {
+                                throwable.printStackTrace();
+                                fetchWeatherByCity(DEFAULT_CITY);
+                            }
+                    );
+        }
+    }
+
+    private void showWeatherSimulatorDialog() {
+        String[] options = {"Cold (< 15°C)", "Mild (15°C - 25°C)", "Hot (> 25°C)", "Real API Weather"};
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Select Weather Simulator")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 3) {
+                        checkLocationPermissionsAndStart();
+                    } else {
+                        double temp = (which == 0) ? 12.0 : (which == 1) ? 22.0 : 32.0;
+                        String desc = (which == 0) ? "Snowy" : (which == 1) ? "Cloudy" : "Sunny";
+                        viewModel.setTemperatureAndFilter(temp, desc, "Current Location (Simulated)");
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private int getThemeColor(int attrRes) {
+        TypedValue typedValue = new TypedValue();
+        if (requireContext().getTheme().resolveAttribute(attrRes, typedValue, true)) {
+            return typedValue.data;
+        }
+        return Color.GRAY;
     }
 
     // =========================================================================

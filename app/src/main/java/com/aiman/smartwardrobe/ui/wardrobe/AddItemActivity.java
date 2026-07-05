@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * ============================================================================
@@ -74,6 +75,25 @@ public class AddItemActivity extends AppCompatActivity {
 
     /** The selected color hex string */
     private String selectedColorHex = "#000000";
+
+    // =========================================================================
+    // EDIT MODE STATE
+    // =========================================================================
+
+    /** Intent extra key for passing item ID to enable edit mode */
+    public static final String EXTRA_ITEM_ID = "extra_item_id";
+
+    /** Whether the activity is in edit mode (true) or add mode (false) */
+    private boolean isEditMode = false;
+
+    /** The ID of the item being edited (only valid when isEditMode == true) */
+    private long editItemId = -1;
+
+    /** The original dateAdded timestamp (preserved during edit) */
+    private long originalDateAdded = 0;
+
+    /** The original userId (preserved during edit) */
+    private long originalUserId = 0;
 
     // =========================================================================
     // PREDEFINED COLOR PALETTE
@@ -154,12 +174,20 @@ public class AddItemActivity extends AppCompatActivity {
         repository = new WardrobeRepository(getApplication());
         compositeDisposable = new CompositeDisposable();
 
+        // Determine if we're in edit mode
+        editItemId = getIntent().getLongExtra(EXTRA_ITEM_ID, -1);
+        isEditMode = editItemId != -1;
+
         setupToolbar();
         setupCategorySpinner();
         setupFabricSpinner();
         setupColorPicker();
         setupImagePicker();
         setupSaveButton();
+
+        if (isEditMode) {
+            loadItemForEditing();
+        }
     }
 
     @Override
@@ -180,6 +208,9 @@ public class AddItemActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
+            // Set title based on mode
+            getSupportActionBar().setTitle(
+                    isEditMode ? R.string.title_edit_item : R.string.title_add_item);
         }
         binding.toolbar.setNavigationOnClickListener(v -> finish());
     }
@@ -286,11 +317,91 @@ public class AddItemActivity extends AppCompatActivity {
      * Set up the Save button with form validation.
      */
     private void setupSaveButton() {
+        // Set button text based on mode
+        binding.buttonSave.setText(
+                isEditMode ? R.string.button_update_item : R.string.button_save_item);
+
         binding.buttonSave.setOnClickListener(v -> {
             if (validateForm()) {
                 saveItem();
             }
         });
+    }
+
+    // =========================================================================
+    // EDIT MODE — Load Existing Item Data
+    // =========================================================================
+
+    /**
+     * Load the existing item from the database and pre-fill all form fields.
+     * Called only when the activity is in edit mode.
+     */
+    private void loadItemForEditing() {
+        Disposable disposable = repository.getItemById(editItemId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        item -> {
+                            // Preserve original metadata
+                            originalDateAdded = item.getDateAdded();
+                            originalUserId = item.getUserId();
+
+                            // Pre-fill category dropdown
+                            binding.dropdownCategory.setText(item.getCategory(), false);
+
+                            // Pre-fill fabric dropdown
+                            binding.dropdownFabric.setText(item.getFabricType(), false);
+
+                            // Pre-fill price
+                            binding.editPrice.setText(String.valueOf(item.getPurchasePrice()));
+
+                            // Pre-fill color selection
+                            selectedColorHex = item.getColorHex();
+                            binding.textSelectedColor.setText(selectedColorHex);
+                            updateColorPickerSelection();
+
+                            // Pre-fill image
+                            if (item.getImagePath() != null) {
+                                selectedImagePath = item.getImagePath();
+                                java.io.File imageFile = new java.io.File(selectedImagePath);
+                                if (imageFile.exists()) {
+                                    Glide.with(AddItemActivity.this)
+                                            .load(imageFile)
+                                            .centerCrop()
+                                            .into(binding.imagePreview);
+                                    binding.imagePreview.setVisibility(View.VISIBLE);
+                                    binding.textImagePlaceholder.setVisibility(View.GONE);
+                                }
+                            }
+                        },
+                        throwable -> {
+                            throwable.printStackTrace();
+                            Toast.makeText(this, "Error loading item",
+                                    Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                );
+        compositeDisposable.add(disposable);
+    }
+
+    /**
+     * Update the color picker grid to show the check mark on the currently
+     * selected color. Called during edit mode item loading.
+     */
+    private void updateColorPickerSelection() {
+        for (int i = 0; i < binding.colorPickerGrid.getChildCount(); i++) {
+            View child = binding.colorPickerGrid.getChildAt(i);
+            View checkMark = child.findViewById(R.id.view_check_mark);
+            if (checkMark != null) {
+                // Show check mark only on the matching color
+                if (i < COLOR_PALETTE.length
+                        && COLOR_PALETTE[i].equalsIgnoreCase(selectedColorHex)) {
+                    checkMark.setVisibility(View.VISIBLE);
+                } else {
+                    checkMark.setVisibility(View.GONE);
+                }
+            }
+        }
     }
 
     // =========================================================================
@@ -435,35 +546,64 @@ public class AddItemActivity extends AppCompatActivity {
         double price = Double.parseDouble(
                 binding.editPrice.getText().toString().trim());
 
-        // Create the WardrobeItem entity
-        WardrobeItem item = new WardrobeItem(
-                category,
-                selectedColorHex,
-                fabricType,
-                price,
-                selectedImagePath,     // null if no image was selected
-                System.currentTimeMillis()  // Current timestamp
-        );
+        if (isEditMode) {
+            // UPDATE existing item — preserve original ID and dateAdded
+            WardrobeItem item = new WardrobeItem(
+                    category,
+                    selectedColorHex,
+                    fabricType,
+                    price,
+                    selectedImagePath,
+                    originalDateAdded  // Keep original timestamp
+            );
+            item.setItemId(editItemId);    // Set the existing ID
+            item.setUserId(originalUserId); // Preserve user association
 
-        // Save to Room database asynchronously
-        Disposable disposable = repository.insertItem(item)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        () -> {
-                            // Success — show confirmation and close the form
-                            Toast.makeText(this,
-                                    category + " added to your wardrobe!",
-                                    Toast.LENGTH_SHORT).show();
-                            finish(); // Return to the wardrobe grid
-                        },
-                        throwable -> {
-                            // Error — show error message
-                            Toast.makeText(this,
-                                    "Error saving item: " + throwable.getMessage(),
-                                    Toast.LENGTH_SHORT).show();
-                            throwable.printStackTrace();
-                        }
-                );
-        compositeDisposable.add(disposable);
+            Disposable disposable = repository.updateItem(item)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            () -> {
+                                Toast.makeText(this,
+                                        category + " updated!",
+                                        Toast.LENGTH_SHORT).show();
+                                finish();
+                            },
+                            throwable -> {
+                                Toast.makeText(this,
+                                        "Error updating item: " + throwable.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                                throwable.printStackTrace();
+                            }
+                    );
+            compositeDisposable.add(disposable);
+        } else {
+            // INSERT new item
+            WardrobeItem item = new WardrobeItem(
+                    category,
+                    selectedColorHex,
+                    fabricType,
+                    price,
+                    selectedImagePath,
+                    System.currentTimeMillis()
+            );
+
+            Disposable disposable = repository.insertItem(item)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                            () -> {
+                                Toast.makeText(this,
+                                        category + " added to your wardrobe!",
+                                        Toast.LENGTH_SHORT).show();
+                                finish();
+                            },
+                            throwable -> {
+                                Toast.makeText(this,
+                                        "Error saving item: " + throwable.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                                throwable.printStackTrace();
+                            }
+                    );
+            compositeDisposable.add(disposable);
+        }
     }
 }

@@ -73,4 +73,21 @@
     <string name="analytics_empty_title">No analytics yet</string>
     <string name="analytics_empty_message">Add items to your wardrobe and start wearing them to see insights and Cost-Per-Wear metrics here!</string>
 
+    <!-- ====================================================================
+         Edit Item
+         ==================================================================== -->
+    <string name="title_edit_item">Edit Item</string>
+    <string name="button_update_item">Update Item</string>
+
+    <!-- ====================================================================
+         Search
+         ==================================================================== -->
+    <string name="search_hint">Search wardrobe…</string>
+
+    <!-- ====================================================================
+         Wear History
+         ==================================================================== -->
+    <string name="analytics_wear_history">Wear History</string>
+    <string name="wear_history_empty">No wear history yet. Log an outfit from the Stylist to see your history here!</string>
+
 </resources>
