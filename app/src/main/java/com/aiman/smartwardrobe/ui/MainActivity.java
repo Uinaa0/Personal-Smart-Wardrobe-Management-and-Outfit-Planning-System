@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.aiman.smartwardrobe.R;
+import com.aiman.smartwardrobe.data.SmartWardrobeDatabase;
+import com.aiman.smartwardrobe.data.entity.UserProfile;
 import com.aiman.smartwardrobe.databinding.ActivityMainBinding;
 import com.aiman.smartwardrobe.ui.analytics.AnalyticsFragment;
 import com.aiman.smartwardrobe.ui.auth.ProfileFragment;
@@ -56,6 +58,33 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Ensure active user ID is initialized in SharedPreferences under all entry paths
+        android.content.SharedPreferences prefs = getSharedPreferences("smart_wardrobe_auth", MODE_PRIVATE);
+        if (prefs.getBoolean("is_logged_in", false)) {
+            long userId = prefs.getLong("logged_in_user_id", -1);
+            if (userId == -1) {
+                String email = prefs.getString("user_email", "user@email.com");
+                long storedUserId = prefs.getLong("user_id_" + email, -1);
+                if (storedUserId == -1) {
+                    String name = prefs.getString("user_name", "User");
+                    UserProfile profile = new UserProfile(name, "{}");
+                    SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
+                            .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                            .subscribe(
+                                    newId -> {
+                                        prefs.edit()
+                                                .putLong("user_id_" + email, newId)
+                                                .putLong("logged_in_user_id", newId)
+                                                .apply();
+                                    },
+                                    Throwable::printStackTrace
+                            );
+                } else {
+                    prefs.edit().putLong("logged_in_user_id", storedUserId).apply();
+                }
+            }
+        }
 
         // Inflate the layout using ViewBinding
         binding = ActivityMainBinding.inflate(getLayoutInflater());

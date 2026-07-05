@@ -71,7 +71,37 @@ public class LoginActivity extends AppCompatActivity {
 
         // If user is already logged in, jump straight to MainActivity
         if (isUserLoggedIn()) {
-            goToMain();
+            SharedPreferences prefs = getAuthPrefs();
+            long userId = prefs.getLong("logged_in_user_id", -1);
+            if (userId == -1) {
+                String email = prefs.getString(KEY_EMAIL, "user@email.com");
+                long storedUserId = prefs.getLong("user_id_" + email, -1);
+                if (storedUserId == -1) {
+                    String name = prefs.getString(KEY_NAME, "User");
+                    UserProfile profile = new UserProfile(name, "{}");
+                    SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
+                            .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                            .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    newId -> {
+                                        prefs.edit()
+                                                .putLong("user_id_" + email, newId)
+                                                .putLong("logged_in_user_id", newId)
+                                                .apply();
+                                        goToMain();
+                                    },
+                                    throwable -> {
+                                        throwable.printStackTrace();
+                                        goToMain();
+                                    }
+                            );
+                } else {
+                    prefs.edit().putLong("logged_in_user_id", storedUserId).apply();
+                    goToMain();
+                }
+            } else {
+                goToMain();
+            }
             return;
         }
 
