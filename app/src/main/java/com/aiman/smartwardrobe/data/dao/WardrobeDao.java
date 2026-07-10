@@ -131,138 +131,33 @@ public interface WardrobeDao {
     @Delete
     Completable deleteItem(WardrobeItem item);
 
-    // =========================================================================
-    // QUERY OPERATIONS
-    // =========================================================================
-
-    /**
-     * Retrieve ALL wardrobe items, ordered by most recently added first.
-     *
-     * <p><b>Reactive Behavior:</b> Returns a {@link Flowable} which means
-     * Room will automatically re-emit the complete, updated list whenever
-     * ANY row in the wardrobe_item table is inserted, updated, or deleted.
-     * The UI (RecyclerView) subscribes to this Flowable and updates in
-     * real-time without manual refresh calls.</p>
-     *
-     * <p><b>SQL:</b> {@code SELECT * FROM wardrobe_item ORDER BY date_added DESC}</p>
-     *
-     * @return Flowable emitting the complete list of wardrobe items
-     */
     @Query("SELECT * FROM wardrobe_item WHERE user_id = :userId ORDER BY date_added DESC")
     Flowable<List<WardrobeItem>> getAllItems(long userId);
 
-    /**
-     * Retrieve wardrobe items filtered by a specific clothing category.
-     *
-     * <p>Used by the category filter chips in the wardrobe grid UI.
-     * When the user taps a chip (e.g., "T-Shirt"), only items matching
-     * that category are displayed.</p>
-     *
-     * @param category The category to filter by (e.g., "T-Shirt", "Jeans")
-     * @return Flowable emitting items matching the specified category
-     */
     @Query("SELECT * FROM wardrobe_item WHERE category = :category AND user_id = :userId ORDER BY date_added DESC")
     Flowable<List<WardrobeItem>> getItemsByCategory(String category, long userId);
 
-    /**
-     * Retrieve a single wardrobe item by its unique ID.
-     *
-     * <p>Used when navigating to an item detail screen or when the
-     * Smart Stylist needs to look up specific items by ID.</p>
-     *
-     * @param itemId The unique identifier of the item
-     * @return Single emitting the matching WardrobeItem
-     */
     @Query("SELECT * FROM wardrobe_item WHERE item_id = :itemId")
     Single<WardrobeItem> getItemById(long itemId);
 
-    /**
-     * Get the total count of items in the wardrobe.
-     *
-     * <p>Used for:
-     * <ul>
-     *   <li>Analytics dashboard statistics</li>
-     *   <li>Empty-state UI decisions (show placeholder when count = 0)</li>
-     * </ul></p>
-     *
-     * @return Single emitting the total number of wardrobe items
-     */
     @Query("SELECT COUNT(*) FROM wardrobe_item WHERE user_id = :userId")
     Single<Integer> getItemCount(long userId);
 
-    /**
-     * Get all distinct categories that have at least one item.
-     *
-     * <p>Used to dynamically populate the category filter chips in the
-     * wardrobe grid UI. Only categories that actually contain items are
-     * shown (e.g., if the user has no "Dress" items, "Dress" won't
-     * appear as a filter chip).</p>
-     *
-     * @return Flowable emitting the list of distinct category strings
-     */
     @Query("SELECT DISTINCT category FROM wardrobe_item WHERE user_id = :userId ORDER BY category ASC")
     Flowable<List<String>> getAllCategories(long userId);
 
-    /**
-     * Retrieve wardrobe items matching a list of category names.
-     * Used by the Fit Stylist to fetch all "Tops", "Bottoms", or "Shoes" in one query.
-     *
-     * @param categories List of category strings (e.g. ["T-Shirt", "Shirt", "Sweater"])
-     * @return Flowable emitting the list of items matching any of the specified categories
-     */
     @Query("SELECT * FROM wardrobe_item WHERE category IN (:categories) AND user_id = :userId ORDER BY date_added DESC")
     Flowable<List<WardrobeItem>> getItemsByCategories(List<String> categories, long userId);
 
-    /**
-     * Retrieve a static snapshot of wardrobe items matching a list of categories.
-     * Used by the Smart Stylist generation algorithm for one-shot filtering.
-     *
-     * @param categories List of category strings to retrieve
-     * @return Single emitting the snapshot list of matching items
-     */
     @Query("SELECT * FROM wardrobe_item WHERE category IN (:categories) AND user_id = :userId ORDER BY date_added DESC")
     Single<List<WardrobeItem>> getItemsByCategoriesSingle(List<String> categories, long userId);
 
-    // =========================================================================
-    // ANALYTICS QUERIES (Module 4)
-    // =========================================================================
-
-    /**
-     * Get the total monetary value of all items in the wardrobe.
-     *
-     * <p><b>Used in Analytics Dashboard (Module 4):</b>
-     * Displayed as the "Total Value" summary card.</p>
-     *
-     * @return Single emitting the sum of all purchase prices
-     */
     @Query("SELECT COALESCE(SUM(purchase_price), 0) FROM wardrobe_item WHERE user_id = :userId")
     Single<Double> getTotalValue(long userId);
 
-    /**
-     * Get the distribution of items across categories.
-     *
-     * <p>Returns a list of {@link CategoryCount} POJOs, each containing
-     * a category name and the number of items in that category.
-     * Results are ordered by count descending (largest category first).</p>
-     *
-     * <p><b>Used in Analytics Dashboard (Module 4):</b>
-     * Rendered as horizontal distribution bars.</p>
-     *
-     * @return Single emitting the list of category counts
-     */
     @Query("SELECT category, COUNT(*) AS count FROM wardrobe_item WHERE user_id = :userId GROUP BY category ORDER BY count DESC")
     Single<List<CategoryCount>> getCategoryDistribution(long userId);
 
-    // =========================================================================
-    // SEARCH QUERY (Search Feature)
-    // =========================================================================
-
-    /**
-     * Search wardrobe items by matching category or fabric type.
-     *
-     * @param query The search term to match against category and fabric_type
-     * @return Flowable emitting the list of matching items
-     */
     @Query("SELECT * FROM wardrobe_item WHERE (category LIKE '%' || :query || '%' " +
            "OR fabric_type LIKE '%' || :query || '%') AND user_id = :userId ORDER BY date_added DESC")
     Flowable<List<WardrobeItem>> searchItems(String query, long userId);
