@@ -26,12 +26,16 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
  * LoginActivity — User Authentication Screen
  * ============================================================================
  *
- * <p>Provides a premium login interface where users sign in with their
+ * <p>
+ * Provides a premium login interface where users sign in with their
  * email and password. Credentials are validated against SharedPreferences
- * where the account was created at sign-up.</p>
+ * where the account was created at sign-up.
+ * </p>
  *
- * <p>On successful login, the user is taken to {@link MainActivity}.
- * If already logged in (session persists), this screen is bypassed.</p>
+ * <p>
+ * On successful login, the user is taken to {@link MainActivity}.
+ * If already logged in (session persists), this screen is bypassed.
+ * </p>
  *
  * @author Aiman — Final Year Project
  * @version 1.1
@@ -76,11 +80,42 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         session = SessionManager.getInstance(this);
 
+        // BYPASS LOGIN: Automatically log in with a mock developer account if not already logged in
+        if (!session.isLoggedIn()) {
+            session.getPrefs().edit()
+                    .putString(KEY_EMAIL, "developer@smartwardrobe.com")
+                    .putString(KEY_NAME, "Developer Account")
+                    .putString(KEY_PASSWORD, HashUtils.hashPassword("developer123"))
+                    .apply();
+
+            // Create developer profile in Room
+            UserProfile devProfile = new UserProfile("Developer Account", "developer@smartwardrobe.com", HashUtils.hashPassword("developer123"), "{}");
+            compositeDisposable.add(
+                    SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().getUserByEmail("developer@smartwardrobe.com")
+                            .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                            .map(UserProfile::getUserId)
+                            .switchIfEmpty(io.reactivex.rxjava3.core.Single.defer(() ->
+                                    SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(devProfile)
+                            ))
+                            .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                            .subscribe(
+                                    userId -> {
+                                        session.setLoggedIn("developer@smartwardrobe.com", userId);
+                                        goToMain();
+                                    },
+                                    throwable -> {
+                                        throwable.printStackTrace();
+                                        goToMain();
+                                    }
+                            )
+            );
+            return;
+        }
+
         // If user is already logged in, ensure user ID is initialized then jump to Main
         if (session.isLoggedIn()) {
             compositeDisposable.add(
-                    session.ensureUserIdInitialized(this::goToMain)
-            );
+                    session.ensureUserIdInitialized(this::goToMain));
             return;
         }
 
@@ -180,15 +215,14 @@ public class LoginActivity extends AppCompatActivity {
                                 },
                                 throwable -> {
                                     throwable.printStackTrace();
-                                    Snackbar.make(binding.getRoot(), "Login failed: " + throwable.getMessage(), Snackbar.LENGTH_LONG).show();
+                                    Snackbar.make(binding.getRoot(), "Login failed: " + throwable.getMessage(),
+                                            Snackbar.LENGTH_LONG).show();
                                 },
                                 () -> {
                                     // User profile not found in Room
                                     binding.layoutEmail.setError("Email not found");
                                     binding.layoutEmail.requestFocus();
-                                }
-                        )
-        );
+                                }));
     }
 
     // =========================================================================
@@ -225,8 +259,7 @@ public class LoginActivity extends AppCompatActivity {
     private void hideKeyboard() {
         View view = getCurrentFocus();
         if (view != null) {
-            InputMethodManager imm = (InputMethodManager)
-                    getSystemService(Context.INPUT_METHOD_SERVICE);
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
