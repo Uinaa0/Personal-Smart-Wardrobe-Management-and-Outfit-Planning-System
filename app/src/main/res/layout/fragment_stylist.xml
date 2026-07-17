@@ -60,7 +60,7 @@
             android:id="@+id/layout_mannequin_doll"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintDimensionRatio="1:2"
+            app:layout_constraintDimensionRatio="2:3"
             app:layout_constraintTop_toBottomOf="@id/text_subtitle"
             app:layout_constraintBottom_toTopOf="@id/card_info_panel"
             app:layout_constraintStart_toStartOf="parent"
@@ -81,27 +81,27 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
-            <!-- Proportional Division Guidelines (Head: 25%, Chest: 55%, Legs: 88%, Feet: 100%) -->
+            <!-- Proportional Division Guidelines (Head: 18%, Chest: 50%, Legs: 82%, Feet: 100%) -->
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/guideline_head_bottom"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.25"/>
+                app:layout_constraintGuide_percent="0.18"/>
 
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/guideline_chest_bottom"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.55"/>
+                app:layout_constraintGuide_percent="0.50"/>
 
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/guideline_legs_bottom"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.88"/>
+                app:layout_constraintGuide_percent="0.82"/>
 
             <!-- Clothing Layers -->
             <!-- 1. Head Layer (Accessories) -->
