@@ -621,12 +621,14 @@ public class WardrobeFragment extends Fragment
     }
 
     private void showWeatherSimulatorDialog() {
-        String[] options = {"Cold (< 15°C)", "Mild (15°C - 25°C)", "Hot (> 25°C)", "Real API Weather"};
+        String[] options = {"Cold (< 15°C)", "Mild (15°C - 25°C)", "Hot (> 25°C)", "Real API Weather", "Disable Weather Filter (Show All)"};
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Select Weather Simulator")
                 .setItems(options, (dialog, which) -> {
                     if (which == 3) {
                         checkLocationPermissionsAndStart();
+                    } else if (which == 4) {
+                        viewModel.clearWeatherFilter();
                     } else {
                         double temp = (which == 0) ? 12.0 : (which == 1) ? 22.0 : 32.0;
                         String desc = (which == 0) ? "Snowy" : (which == 1) ? "Cloudy" : "Sunny";
