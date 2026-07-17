@@ -7,7 +7,8 @@
     permissions, and metadata to the Android system.
     ============================================================================
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:installLocation="auto">
 
     <!-- ====================================================================
          PERMISSIONS

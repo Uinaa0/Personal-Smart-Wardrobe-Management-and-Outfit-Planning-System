@@ -19,37 +19,37 @@ plugins {
 
 android {
     // The unique namespace for this application's generated R class and BuildConfig.
-    namespace 'com.aiman.smartwardrobe'
+    namespace = 'com.aiman.smartwardrobe'
 
     // compileSdk 35 (Android 15) — The SDK version used to compile the app.
     // This determines which Android APIs are available at compile time.
-    compileSdk 35
+    compileSdk = 35
 
     defaultConfig {
         // The unique application identifier on Google Play Store.
-        applicationId "com.aiman.smartwardrobe"
+        applicationId = "com.aiman.smartwardrobe"
 
         // minSdk 26 (Android 8.0 Oreo) — The minimum Android version supported.
         // API 26 covers ~95% of active devices and provides:
         // - Adaptive icons, Notification channels, Autofill framework
-        minSdk 26
+        minSdk = 26
 
         // targetSdk 35 — The SDK version the app is designed and tested against.
-        targetSdk 35
+        targetSdk = 35
 
         // Version tracking for release management.
-        versionCode 1
-        versionName "1.0"
+        versionCode = 1
+        versionName = "1.0"
 
         // JUnit test runner for instrumented (on-device) tests.
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
             // ProGuard/R8 code shrinking is disabled for development.
             // Enable this for production builds to reduce APK size.
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -57,8 +57,8 @@ android {
     compileOptions {
         // Java 17 language features (sealed classes, pattern matching, etc.)
         // Required by the latest versions of AndroidX and Room.
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildFeatures {
@@ -66,11 +66,11 @@ android {
         // This eliminates the need for findViewById() calls and provides
         // compile-time safety for view references.
         // Example: ActivityMainBinding is auto-generated for activity_main.xml
-        viewBinding true
+        viewBinding = true
 
         // BuildConfig generation — required for BuildConfig.DEBUG reference
         // in RetrofitClient to conditionally enable HTTP logging.
-        buildConfig true
+        buildConfig = true
     }
 }
 
