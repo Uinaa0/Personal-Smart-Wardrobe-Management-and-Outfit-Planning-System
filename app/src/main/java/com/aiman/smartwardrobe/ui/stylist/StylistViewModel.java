@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.aiman.smartwardrobe.data.ClothingCategory;
 import com.aiman.smartwardrobe.data.entity.WardrobeItem;
 import com.aiman.smartwardrobe.data.repository.WardrobeRepository;
 import com.aiman.smartwardrobe.data.network.RetrofitClient;
@@ -62,13 +63,10 @@ public class StylistViewModel extends AndroidViewModel {
     private final MutableLiveData<String> weatherDescription = new MutableLiveData<>("");
     private final MutableLiveData<String> recommendationAlert = new MutableLiveData<>("");
 
-    // Predefined category groups matching strings in arrays.xml
-    public static final List<String> CATEGORIES_TOP = Arrays.asList(
-            "T-Shirt", "Shirt", "Jacket", "Hoodie", "Sweater");
-    public static final List<String> CATEGORIES_BOTTOM = Arrays.asList(
-            "Pants", "Jeans", "Shorts", "Skirt", "Dress");
-    public static final List<String> CATEGORIES_SHOES = Arrays.asList(
-            "Shoes", "Sneakers", "Boots");
+    // Predefined category groups using centralized constants
+    public static final List<String> CATEGORIES_TOP = ClothingCategory.TOPS;
+    public static final List<String> CATEGORIES_BOTTOM = ClothingCategory.BOTTOMS;
+    public static final List<String> CATEGORIES_SHOES = ClothingCategory.FOOTWEAR;
 
     // Lists of items loaded from the database for swipe navigation
     private List<WardrobeItem> headItems = new ArrayList<>();
@@ -84,10 +82,10 @@ public class StylistViewModel extends AndroidViewModel {
 
     public StylistViewModel(@NonNull Application application) {
         super(application);
-        this.repository = new WardrobeRepository(application);
+        this.repository = WardrobeRepository.getInstance(application);
 
         // Load items reactively from Room to populate our lists
-        Disposable dHead = repository.getItemsByCategories(Arrays.asList("Accessories"))
+        Disposable dHead = repository.getItemsByCategories(ClothingCategory.HEAD)
                 .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
                 .subscribe(list -> {
                     this.headItems = list;
@@ -344,7 +342,7 @@ public class StylistViewModel extends AndroidViewModel {
         List<String> targetCategories;
         switch (slot) {
             case HEAD:
-                targetCategories = Arrays.asList("Accessories");
+                targetCategories = ClothingCategory.HEAD;
                 break;
             case CHEST:
                 targetCategories = CATEGORIES_TOP;
@@ -445,108 +443,19 @@ public class StylistViewModel extends AndroidViewModel {
                 repository.getItemsByCategoriesSingle(allPossibleCategories),
                 (rules, recentlyWornIds, dbItems) -> {
                     // 1. Filter matching rules to find the most specific ones for this temperature
-                    // range
-                    // to prevent overlapping categories (e.g. Winter rule and Casual Hot rule
-                    // unioning at 10°C).
-                    List<com.aiman.smartwardrobe.data.entity.StylingOntology> activeRules = new ArrayList<>();
-                    com.aiman.smartwardrobe.data.entity.StylingOntology bestCasualRule = null;
-                    com.aiman.smartwardrobe.data.entity.StylingOntology bestFormalRule = null;
+                    List<com.aiman.smartwardrobe.data.entity.StylingOntology> activeRules = filterOntologyRules(rules);
 
-                    for (com.aiman.smartwardrobe.data.entity.StylingOntology rule : rules) {
-                        String code = rule.getDressCode().toLowerCase();
-                        if (code.contains("casual") || code.contains("winter") || code.contains("cool")
-                                || code.contains("warm") || code.contains("hot")) {
-                            if (bestCasualRule == null
-                                    || rule.getMaxTemperature() < bestCasualRule.getMaxTemperature()) {
-                                bestCasualRule = rule;
-                            }
-                        } else if (code.contains("formal")) {
-                            if (bestFormalRule == null
-                                    || rule.getMaxTemperature() < bestFormalRule.getMaxTemperature()) {
-                                bestFormalRule = rule;
-                            }
-                        }
-                    }
-                    if (bestCasualRule != null) {
-                        activeRules.add(bestCasualRule);
-                    }
-                    if (bestFormalRule != null) {
-                        activeRules.add(bestFormalRule);
-                    }
+                    // 2. Parse union of allowed categories from the filtered active rules
+                    List<String> allowedCats = parseAllowedCategories(activeRules);
 
-                    // Parse union of allowed categories from the filtered active rules
-                    List<String> allowedCats = new ArrayList<>();
-                    for (com.aiman.smartwardrobe.data.entity.StylingOntology rule : activeRules) {
-                        if (rule.getAllowedCategories() != null) {
-                            String[] parts = rule.getAllowedCategories().split(",");
-                            for (String part : parts) {
-                                String trimmed = part.trim();
-                                if (!trimmed.isEmpty() && !allowedCats.contains(trimmed)) {
-                                    allowedCats.add(trimmed);
-                                }
-                            }
-                        }
-                    }
+                    // 3. Separate and filter items by allowed categories and recency
+                    OutfitCandidateGroup candidates = partitionOutfitCandidates(dbItems, allowedCats, recentlyWornIds);
 
-                    // 2. Separate all DB items into Category Groups (Tops, Bottoms, Shoes)
-                    List<WardrobeItem> dbTops = new ArrayList<>();
-                    List<WardrobeItem> dbBottoms = new ArrayList<>();
-                    List<WardrobeItem> dbShoes = new ArrayList<>();
-
-                    for (WardrobeItem item : dbItems) {
-                        if (CATEGORIES_TOP.contains(item.getCategory())) {
-                            dbTops.add(item);
-                        } else if (CATEGORIES_BOTTOM.contains(item.getCategory())) {
-                            dbBottoms.add(item);
-                        } else if (CATEGORIES_SHOES.contains(item.getCategory())) {
-                            dbShoes.add(item);
-                        }
-                    }
-
-                    // 3. Separate allowed items matching ontology categories
-                    List<WardrobeItem> allowedTops = new ArrayList<>();
-                    List<WardrobeItem> allowedBottoms = new ArrayList<>();
-                    List<WardrobeItem> allowedShoes = new ArrayList<>();
-
-                    for (WardrobeItem item : dbItems) {
-                        if (allowedCats.contains(item.getCategory())) {
-                            if (CATEGORIES_TOP.contains(item.getCategory())) {
-                                allowedTops.add(item);
-                            } else if (CATEGORIES_BOTTOM.contains(item.getCategory())) {
-                                allowedBottoms.add(item);
-                            } else if (CATEGORIES_SHOES.contains(item.getCategory())) {
-                                allowedShoes.add(item);
-                            }
-                        }
-                    }
-
-                    // 4. Apply 3-day recency filter to allowed categories
-                    List<WardrobeItem> freshAllowedTops = new ArrayList<>();
-                    for (WardrobeItem item : allowedTops) {
-                        if (!recentlyWornIds.contains(item.getItemId())) {
-                            freshAllowedTops.add(item);
-                        }
-                    }
-
-                    List<WardrobeItem> freshAllowedBottoms = new ArrayList<>();
-                    for (WardrobeItem item : allowedBottoms) {
-                        if (!recentlyWornIds.contains(item.getItemId())) {
-                            freshAllowedBottoms.add(item);
-                        }
-                    }
-
-                    List<WardrobeItem> freshAllowedShoes = new ArrayList<>();
-                    for (WardrobeItem item : allowedShoes) {
-                        if (!recentlyWornIds.contains(item.getItemId())) {
-                            freshAllowedShoes.add(item);
-                        }
-                    }
-
-                    // 5. Build Outfit Recommendation
+                    // 4. Build Outfit Recommendation
                     java.util.Random random = new java.util.Random();
-                    WardrobeItem top = selectRandomItem(freshAllowedTops, allowedTops, dbTops, random);
-                    WardrobeItem bottom = selectRandomItem(freshAllowedBottoms, allowedBottoms, dbBottoms, random);
-                    WardrobeItem shoes = selectRandomItem(freshAllowedShoes, allowedShoes, dbShoes, random);
+                    WardrobeItem top = selectRandomItem(candidates.freshTops, candidates.allowedTops, candidates.dbTops, random);
+                    WardrobeItem bottom = selectRandomItem(candidates.freshBottoms, candidates.allowedBottoms, candidates.dbBottoms, random);
+                    WardrobeItem shoes = selectRandomItem(candidates.freshShoes, candidates.allowedShoes, candidates.dbShoes, random);
 
                     // Track fallback details for the user notification/alert text
                     StringBuilder sb = new StringBuilder();
@@ -554,9 +463,9 @@ public class StylistViewModel extends AndroidViewModel {
                             .append("°C.\n");
                     sb.append("Allowed Categories: ").append(String.join(", ", allowedCats)).append(".\n\n");
 
-                    appendStatus(sb, "Top", freshAllowedTops, allowedTops, dbTops, top);
-                    appendStatus(sb, "Bottom", freshAllowedBottoms, allowedBottoms, dbBottoms, bottom);
-                    appendStatus(sb, "Shoes", freshAllowedShoes, allowedShoes, dbShoes, shoes);
+                    appendStatus(sb, "Top", candidates.freshTops, candidates.allowedTops, candidates.dbTops, top);
+                    appendStatus(sb, "Bottom", candidates.freshBottoms, candidates.allowedBottoms, candidates.dbBottoms, bottom);
+                    appendStatus(sb, "Shoes", candidates.freshShoes, candidates.allowedShoes, candidates.dbShoes, shoes);
 
                     return new RecommendationResult(top, bottom, shoes, sb.toString());
                 })
@@ -575,6 +484,101 @@ public class StylistViewModel extends AndroidViewModel {
                                     .setValue("Failed to generate recommendation: " + throwable.getMessage());
                         });
         compositeDisposable.add(disposable);
+    }
+
+    private List<com.aiman.smartwardrobe.data.entity.StylingOntology> filterOntologyRules(
+            List<com.aiman.smartwardrobe.data.entity.StylingOntology> rules) {
+        List<com.aiman.smartwardrobe.data.entity.StylingOntology> activeRules = new ArrayList<>();
+        com.aiman.smartwardrobe.data.entity.StylingOntology bestCasualRule = null;
+        com.aiman.smartwardrobe.data.entity.StylingOntology bestFormalRule = null;
+
+        for (com.aiman.smartwardrobe.data.entity.StylingOntology rule : rules) {
+            String code = rule.getDressCode().toLowerCase();
+            if (code.contains("casual") || code.contains("winter") || code.contains("cool")
+                    || code.contains("warm") || code.contains("hot")) {
+                if (bestCasualRule == null
+                        || rule.getMaxTemperature() < bestCasualRule.getMaxTemperature()) {
+                    bestCasualRule = rule;
+                }
+            } else if (code.contains("formal")) {
+                if (bestFormalRule == null
+                        || rule.getMaxTemperature() < bestFormalRule.getMaxTemperature()) {
+                    bestFormalRule = rule;
+                }
+            }
+        }
+        if (bestCasualRule != null) {
+            activeRules.add(bestCasualRule);
+        }
+        if (bestFormalRule != null) {
+            activeRules.add(bestFormalRule);
+        }
+        return activeRules;
+    }
+
+    private List<String> parseAllowedCategories(
+            List<com.aiman.smartwardrobe.data.entity.StylingOntology> activeRules) {
+        List<String> allowedCats = new ArrayList<>();
+        for (com.aiman.smartwardrobe.data.entity.StylingOntology rule : activeRules) {
+            if (rule.getAllowedCategories() != null) {
+                String[] parts = rule.getAllowedCategories().split(",");
+                for (String part : parts) {
+                    String trimmed = part.trim();
+                    if (!trimmed.isEmpty() && !allowedCats.contains(trimmed)) {
+                        allowedCats.add(trimmed);
+                    }
+                }
+            }
+        }
+        return allowedCats;
+    }
+
+    private OutfitCandidateGroup partitionOutfitCandidates(
+            List<WardrobeItem> dbItems,
+            List<String> allowedCats,
+            List<Long> recentlyWornIds) {
+        OutfitCandidateGroup group = new OutfitCandidateGroup();
+
+        for (WardrobeItem item : dbItems) {
+            boolean isTop = CATEGORIES_TOP.contains(item.getCategory());
+            boolean isBottom = CATEGORIES_BOTTOM.contains(item.getCategory());
+            boolean isShoes = CATEGORIES_SHOES.contains(item.getCategory());
+            boolean isAllowed = allowedCats.contains(item.getCategory());
+            boolean isFresh = !recentlyWornIds.contains(item.getItemId());
+
+            if (isTop) {
+                group.dbTops.add(item);
+                if (isAllowed) {
+                    group.allowedTops.add(item);
+                    if (isFresh) group.freshTops.add(item);
+                }
+            } else if (isBottom) {
+                group.dbBottoms.add(item);
+                if (isAllowed) {
+                    group.allowedBottoms.add(item);
+                    if (isFresh) group.freshBottoms.add(item);
+                }
+            } else if (isShoes) {
+                group.dbShoes.add(item);
+                if (isAllowed) {
+                    group.allowedShoes.add(item);
+                    if (isFresh) group.freshShoes.add(item);
+                }
+            }
+        }
+        return group;
+    }
+
+    private static class OutfitCandidateGroup {
+        final List<WardrobeItem> dbTops = new ArrayList<>();
+        final List<WardrobeItem> dbBottoms = new ArrayList<>();
+        final List<WardrobeItem> dbShoes = new ArrayList<>();
+        final List<WardrobeItem> allowedTops = new ArrayList<>();
+        final List<WardrobeItem> allowedBottoms = new ArrayList<>();
+        final List<WardrobeItem> allowedShoes = new ArrayList<>();
+        final List<WardrobeItem> freshTops = new ArrayList<>();
+        final List<WardrobeItem> freshBottoms = new ArrayList<>();
+        final List<WardrobeItem> freshShoes = new ArrayList<>();
     }
 
     private WardrobeItem selectRandomItem(List<WardrobeItem> fresh, List<WardrobeItem> allowed,

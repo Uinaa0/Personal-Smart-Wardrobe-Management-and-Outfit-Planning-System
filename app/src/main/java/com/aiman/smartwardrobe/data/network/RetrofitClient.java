@@ -1,5 +1,7 @@
 package com.aiman.smartwardrobe.data.network;
 
+import com.aiman.smartwardrobe.BuildConfig;
+
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -16,8 +18,12 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * <p>Builds the Retrofit instance to communicate with the OpenWeatherMap API.
  * Employs OkHttp timeouts and HTTP logging for easy network debugging.</p>
  *
+ * <p><b>Security:</b> HTTP logging is set to BODY level only in debug
+ * builds. Release builds use NONE to prevent API keys and sensitive
+ * data from leaking into Logcat.</p>
+ *
  * @author Aiman — Final Year Project
- * @version 1.0
+ * @version 1.1
  */
 public class RetrofitClient {
 
@@ -26,9 +32,12 @@ public class RetrofitClient {
     private final WeatherApiService weatherApiService;
 
     private RetrofitClient() {
-        // OkHttp logging interceptor to log HTTP requests and responses in Logcat
+        // OkHttp logging interceptor — BODY level only in debug builds
+        // to prevent API key leakage in release Logcat output
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        loggingInterceptor.setLevel(BuildConfig.DEBUG
+                ? HttpLoggingInterceptor.Level.BODY
+                : HttpLoggingInterceptor.Level.NONE);
 
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(loggingInterceptor)

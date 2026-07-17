@@ -75,4 +75,23 @@ public interface UserProfileDao {
      */
     @Query("SELECT * FROM user_profile LIMIT 1")
     Single<UserProfile> getCurrentUser();
+
+    /**
+     * Retrieve a user profile by their user ID.
+     *
+     * @param userId The ID of the user
+     * @return Single emitting the UserProfile
+     */
+    @Query("SELECT * FROM user_profile WHERE user_id = :userId LIMIT 1")
+    Single<UserProfile> getUserById(long userId);
+
+    /**
+     * Retrieve a user profile by email address.
+     * Used during authentication to verify credentials.
+     *
+     * @param email The email address to search for
+     * @return Maybe emitting the UserProfile if found, or empty if not found
+     */
+    @Query("SELECT * FROM user_profile WHERE email = :email LIMIT 1")
+    io.reactivex.rxjava3.core.Maybe<UserProfile> getUserByEmail(String email);
 }

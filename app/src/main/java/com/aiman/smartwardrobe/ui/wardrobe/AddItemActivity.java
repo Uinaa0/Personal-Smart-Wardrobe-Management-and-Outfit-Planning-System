@@ -174,7 +174,7 @@ public class AddItemActivity extends AppCompatActivity {
         binding = ActivityAddItemBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        repository = new WardrobeRepository(getApplication());
+        repository = WardrobeRepository.getInstance(getApplication());
         compositeDisposable = new CompositeDisposable();
 
         // Determine if we're in edit mode

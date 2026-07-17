@@ -19,6 +19,8 @@ import com.aiman.smartwardrobe.ui.MainActivity;
 import com.google.android.material.snackbar.Snackbar;
 import android.widget.Toast;
 
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+
 /**
  * ============================================================================
  * LoginActivity — User Authentication Screen
@@ -32,34 +34,38 @@ import android.widget.Toast;
  * If already logged in (session persists), this screen is bypassed.</p>
  *
  * @author Aiman — Final Year Project
- * @version 1.0
+ * @version 1.1
  */
 public class LoginActivity extends AppCompatActivity {
 
     // =========================================================================
-    // CONSTANTS
+    // CONSTANTS (kept for backward compatibility with other files)
     // =========================================================================
 
     /** SharedPreferences file name for user account data. */
-    public static final String PREFS_AUTH = "smart_wardrobe_auth";
+    public static final String PREFS_AUTH = SessionManager.PREFS_AUTH;
 
     /** Key for the stored email. */
-    public static final String KEY_EMAIL = "user_email";
+    public static final String KEY_EMAIL = SessionManager.KEY_EMAIL;
 
-    /** Key for the stored password (hashed in production; plain for demo). */
-    public static final String KEY_PASSWORD = "user_password";
+    /** Key for the stored password (hashed with PBKDF2). */
+    public static final String KEY_PASSWORD = SessionManager.KEY_PASSWORD;
 
     /** Key for the stored display name. */
-    public static final String KEY_NAME = "user_name";
+    public static final String KEY_NAME = SessionManager.KEY_NAME;
 
     /** Key tracking whether the user is currently logged in. */
-    public static final String KEY_LOGGED_IN = "is_logged_in";
+    public static final String KEY_LOGGED_IN = SessionManager.KEY_LOGGED_IN;
 
     // =========================================================================
-    // VIEW BINDING
+    // VIEW BINDING & SESSION
     // =========================================================================
 
     private ActivityLoginBinding binding;
+    private SessionManager session;
+
+    /** Manages all RxJava subscriptions — disposed in onDestroy(). */
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     // =========================================================================
     // LIFECYCLE
@@ -68,40 +74,13 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        session = SessionManager.getInstance(this);
 
-        // If user is already logged in, jump straight to MainActivity
-        if (isUserLoggedIn()) {
-            SharedPreferences prefs = getAuthPrefs();
-            long userId = prefs.getLong("logged_in_user_id", -1);
-            if (userId == -1) {
-                String email = prefs.getString(KEY_EMAIL, "user@email.com");
-                long storedUserId = prefs.getLong("user_id_" + email, -1);
-                if (storedUserId == -1) {
-                    String name = prefs.getString(KEY_NAME, "User");
-                    UserProfile profile = new UserProfile(name, "{}");
-                    SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
-                            .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
-                            .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
-                            .subscribe(
-                                    newId -> {
-                                        prefs.edit()
-                                                .putLong("user_id_" + email, newId)
-                                                .putLong("logged_in_user_id", newId)
-                                                .apply();
-                                        goToMain();
-                                    },
-                                    throwable -> {
-                                        throwable.printStackTrace();
-                                        goToMain();
-                                    }
-                            );
-                } else {
-                    prefs.edit().putLong("logged_in_user_id", storedUserId).apply();
-                    goToMain();
-                }
-            } else {
-                goToMain();
-            }
+        // If user is already logged in, ensure user ID is initialized then jump to Main
+        if (session.isLoggedIn()) {
+            compositeDisposable.add(
+                    session.ensureUserIdInitialized(this::goToMain)
+            );
             return;
         }
 
@@ -109,6 +88,12 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setupClickListeners();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.clear();
     }
 
     // =========================================================================
@@ -170,67 +155,40 @@ public class LoginActivity extends AppCompatActivity {
             binding.layoutPassword.requestFocus();
             return;
         }
-
-        // Check credentials against SharedPreferences
-        SharedPreferences prefs = getAuthPrefs();
-        String storedEmail = prefs.getString(KEY_EMAIL, null);
-        String storedPassword = prefs.getString(KEY_PASSWORD, null);
-
-        if (storedEmail == null) {
-            // No account exists yet — prompt to sign up
-            Snackbar.make(binding.getRoot(),
-                    "No account found. Please create an account first.",
-                    Snackbar.LENGTH_LONG)
-                    .setAction("Sign Up", v -> {
-                        Intent intent = new Intent(this, SignUpActivity.class);
-                        startActivity(intent);
-                    })
-                    .show();
-            return;
-        }
-
-        if (!email.equalsIgnoreCase(storedEmail)) {
-            binding.layoutEmail.setError("Email not found");
-            binding.layoutEmail.requestFocus();
-            return;
-        }
-
-        if (!HashUtils.hashPassword(password).equals(storedPassword)) {
-            binding.layoutPassword.setError("Incorrect password");
-            binding.layoutPassword.requestFocus();
-            return;
-        }
-
-        // Login successful — set user ID and redirect to Main
-        long userId = prefs.getLong("user_id_" + email, -1);
-        if (userId == -1) {
-            UserProfile profile = new UserProfile(prefs.getString(KEY_NAME, "User"), "{}");
-            SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
-                    .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
-                    .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
-                    .subscribe(
-                            newId -> {
-                                prefs.edit()
-                                        .putLong("user_id_" + email, newId)
-                                        .putLong("logged_in_user_id", newId)
-                                        .putBoolean(KEY_LOGGED_IN, true)
-                                        .apply();
-                                showSuccess("Welcome back!");
-                                goToMain();
-                            },
-                            throwable -> {
-                                throwable.printStackTrace();
-                                Toast.makeText(this, "Session initialization failed", Toast.LENGTH_SHORT).show();
-                            }
-                    );
-        } else {
-            prefs.edit()
-                    .putLong("logged_in_user_id", userId)
-                    .putBoolean(KEY_LOGGED_IN, true)
-                    .apply();
-            showSuccess("Welcome back!");
-            goToMain();
-        }
+        // Check credentials against Room Database
+        compositeDisposable.add(
+                SmartWardrobeDatabase.getInstance(getApplicationContext())
+                        .userProfileDao().getUserByEmail(email)
+                        .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                        .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                        .subscribe(
+                                userProfile -> {
+                                    if (HashUtils.verifyPassword(password, userProfile.getPassword())) {
+                                        // Save back to SharedPreferences for UI display convenience
+                                        session.getPrefs().edit()
+                                                .putString(KEY_EMAIL, userProfile.getEmail())
+                                                .putString(KEY_NAME, userProfile.getUsername())
+                                                .putString(KEY_PASSWORD, userProfile.getPassword())
+                                                .apply();
+                                        session.setLoggedIn(userProfile.getEmail(), userProfile.getUserId());
+                                        showSuccess("Welcome back!");
+                                        goToMain();
+                                    } else {
+                                        binding.layoutPassword.setError("Incorrect password");
+                                        binding.layoutPassword.requestFocus();
+                                    }
+                                },
+                                throwable -> {
+                                    throwable.printStackTrace();
+                                    Snackbar.make(binding.getRoot(), "Login failed: " + throwable.getMessage(), Snackbar.LENGTH_LONG).show();
+                                },
+                                () -> {
+                                    // User profile not found in Room
+                                    binding.layoutEmail.setError("Email not found");
+                                    binding.layoutEmail.requestFocus();
+                                }
+                        )
+        );
     }
 
     // =========================================================================
@@ -249,12 +207,8 @@ public class LoginActivity extends AppCompatActivity {
                 : "";
     }
 
-    private boolean isUserLoggedIn() {
-        return getAuthPrefs().getBoolean(KEY_LOGGED_IN, false);
-    }
-
     private SharedPreferences getAuthPrefs() {
-        return getSharedPreferences(PREFS_AUTH, Context.MODE_PRIVATE);
+        return session.getPrefs();
     }
 
     private void goToMain() {

@@ -67,6 +67,10 @@ android {
         // compile-time safety for view references.
         // Example: ActivityMainBinding is auto-generated for activity_main.xml
         viewBinding true
+
+        // BuildConfig generation — required for BuildConfig.DEBUG reference
+        // in RetrofitClient to conditionally enable HTTP logging.
+        buildConfig true
     }
 }
 

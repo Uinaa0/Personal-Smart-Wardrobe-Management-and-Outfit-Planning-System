@@ -7,6 +7,7 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
+import androidx.room.migration.Migration;
 
 import com.aiman.smartwardrobe.data.dao.CalendarEventDao;
 import com.aiman.smartwardrobe.data.dao.StylingOntologyDao;
@@ -20,6 +21,8 @@ import com.aiman.smartwardrobe.data.entity.WardrobeItem;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
+
+import static com.aiman.smartwardrobe.data.ClothingCategory.*;
 
 /**
  * ============================================================================
@@ -73,7 +76,7 @@ import java.util.concurrent.Executors;
         CalendarEvent.class,
         StylingOntology.class
     },
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 public abstract class SmartWardrobeDatabase extends RoomDatabase {
@@ -143,6 +146,18 @@ public abstract class SmartWardrobeDatabase extends RoomDatabase {
      *                memory leaks — Room holds a reference to this context)
      * @return The singleton SmartWardrobeDatabase instance
      */
+    /**
+     * Migration from database version 3 to 4.
+     * Adds the email and password columns to the user_profile table.
+     */
+    public static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE user_profile ADD COLUMN email TEXT");
+            database.execSQL("ALTER TABLE user_profile ADD COLUMN password TEXT");
+        }
+    };
+
     @SuppressWarnings("deprecation") // fallbackToDestructiveMigration() is acceptable during FYP development
     public static SmartWardrobeDatabase getInstance(Context context) {
         if (INSTANCE == null) {                          // First check (no lock)
@@ -153,6 +168,8 @@ public abstract class SmartWardrobeDatabase extends RoomDatabase {
                             SmartWardrobeDatabase.class,
                             DATABASE_NAME
                     )
+                    // Add proper migrations to preserve user data
+                    .addMigrations(MIGRATION_3_4)
                     // Callback to pre-seed the database with default styling rules
                     .addCallback(sRoomDatabaseCallback)
                     // WARNING: fallbackToDestructiveMigration() destroys all data
@@ -198,27 +215,27 @@ public abstract class SmartWardrobeDatabase extends RoomDatabase {
                             List<StylingOntology> defaultRules = Arrays.asList(
                                 new StylingOntology(
                                     "Casual Hot",
-                                    "T-Shirt,Shorts,Sneakers,Dress,Skirt",
+                                    T_SHIRT + "," + SHORTS + "," + SNEAKERS + "," + DRESS + "," + SKIRT,
                                     45.0
                                 ),
                                 new StylingOntology(
                                     "Casual Warm",
-                                    "T-Shirt,Shirt,Jeans,Pants,Sneakers,Shoes",
+                                    T_SHIRT + "," + SHIRT + "," + JEANS + "," + PANTS + "," + SNEAKERS + "," + SHOES,
                                     28.0
                                 ),
                                 new StylingOntology(
                                     "Casual Cool",
-                                    "Hoodie,Sweater,Shirt,Jeans,Pants,Boots,Sneakers",
+                                    HOODIE + "," + SWEATER + "," + SHIRT + "," + JEANS + "," + PANTS + "," + BOOTS + "," + SNEAKERS,
                                     18.0
                                 ),
                                 new StylingOntology(
                                     "Formal",
-                                    "Shirt,Pants,Dress,Shoes",
+                                    SHIRT + "," + PANTS + "," + DRESS + "," + SHOES,
                                     35.0
                                 ),
                                 new StylingOntology(
                                     "Winter",
-                                    "Jacket,Sweater,Hoodie,Jeans,Pants,Boots",
+                                    JACKET + "," + SWEATER + "," + HOODIE + "," + JEANS + "," + PANTS + "," + BOOTS,
                                     10.0
                                 )
                             );

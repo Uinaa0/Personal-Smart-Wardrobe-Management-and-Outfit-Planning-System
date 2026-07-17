@@ -1,7 +1,6 @@
 package com.aiman.smartwardrobe.data.repository;
 
 import android.app.Application;
-import android.content.Context;
 
 import com.aiman.smartwardrobe.data.SmartWardrobeDatabase;
 import com.aiman.smartwardrobe.data.dao.CalendarEventDao;
@@ -13,6 +12,7 @@ import com.aiman.smartwardrobe.data.entity.ItemWearStats;
 import com.aiman.smartwardrobe.data.entity.StylingOntology;
 import com.aiman.smartwardrobe.data.entity.WardrobeItem;
 import com.aiman.smartwardrobe.data.entity.WearHistoryEntry;
+import com.aiman.smartwardrobe.ui.auth.SessionManager;
 
 import java.util.List;
 
@@ -91,7 +91,13 @@ public class WardrobeRepository {
 
     /** DAO for styling ontology rules */
     private final StylingOntologyDao stylingOntologyDao;
-    private final Application application;
+    private final SessionManager session;
+
+    // =========================================================================
+    // SINGLETON (Fix #12 — avoid creating multiple Repository instances)
+    // =========================================================================
+
+    private static volatile WardrobeRepository INSTANCE;
 
 
 
@@ -111,20 +117,34 @@ public class WardrobeRepository {
      * @param application The Application instance, used to get the
      *                    database singleton
      */
-    public WardrobeRepository(Application application) {
-        this.application = application;
+    private WardrobeRepository(Application application) {
+        this.session = SessionManager.getInstance(application);
         // Obtain the database singleton and extract DAOs
         SmartWardrobeDatabase database = SmartWardrobeDatabase.getInstance(application);
         this.wardrobeDao = database.wardrobeDao();
         this.calendarEventDao = database.calendarEventDao();
         this.stylingOntologyDao = database.stylingOntologyDao();
+    }
 
-
+    /**
+     * Get the singleton WardrobeRepository instance.
+     *
+     * @param application The Application instance
+     * @return The singleton WardrobeRepository
+     */
+    public static WardrobeRepository getInstance(Application application) {
+        if (INSTANCE == null) {
+            synchronized (WardrobeRepository.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new WardrobeRepository(application);
+                }
+            }
+        }
+        return INSTANCE;
     }
 
     private long getLoggedInUserId() {
-        return application.getSharedPreferences("smart_wardrobe_auth", Context.MODE_PRIVATE)
-                .getLong("logged_in_user_id", 0);
+        return session.getLoggedInUserId();
     }
 
     // =========================================================================
@@ -371,6 +391,18 @@ public class WardrobeRepository {
      */
     public Single<Integer> getTotalWearCount() {
         return calendarEventDao.getTotalWearCount(getLoggedInUserId())
+                .subscribeOn(Schedulers.io());
+    }
+
+    /**
+     * Get wear stats for ALL wardrobe items (no limit).
+     * Used by AnalyticsViewModel to compute an accurate average CPW
+     * across the entire wardrobe — not just the top 5 most-worn items.
+     *
+     * @return Single emitting wear stats for all items
+     */
+    public Single<List<ItemWearStats>> getAllItemWearStats() {
+        return calendarEventDao.getAllItemWearStats(getLoggedInUserId())
                 .subscribeOn(Schedulers.io());
     }
 

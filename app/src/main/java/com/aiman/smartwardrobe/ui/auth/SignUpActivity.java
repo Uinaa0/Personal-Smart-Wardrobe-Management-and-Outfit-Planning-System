@@ -18,6 +18,8 @@ import com.aiman.smartwardrobe.databinding.ActivitySignupBinding;
 import com.aiman.smartwardrobe.ui.MainActivity;
 import com.google.android.material.snackbar.Snackbar;
 
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+
 /**
  * ============================================================================
  * SignUpActivity — User Registration Screen
@@ -41,6 +43,10 @@ public class SignUpActivity extends AppCompatActivity {
 
     private ActivitySignupBinding binding;
 
+    /** Manages all RxJava subscriptions — disposed in onDestroy(). */
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private SessionManager session;
+
     // =========================================================================
     // LIFECYCLE
     // =========================================================================
@@ -51,8 +57,15 @@ public class SignUpActivity extends AppCompatActivity {
 
         binding = ActivitySignupBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        session = SessionManager.getInstance(this);
 
         setupClickListeners();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.clear();
     }
 
     // =========================================================================
@@ -143,39 +156,53 @@ public class SignUpActivity extends AppCompatActivity {
             return;
         }
 
-        // Check if account already exists
+        // Check if account already exists in Room Database
+        compositeDisposable.add(
+                SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().getUserByEmail(email)
+                        .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                        .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                        .subscribe(
+                                existingProfile -> {
+                                    binding.layoutEmail.setError("An account with this email already exists");
+                                    binding.layoutEmail.requestFocus();
+                                },
+                                throwable -> {
+                                    throwable.printStackTrace();
+                                    Snackbar.make(binding.getRoot(), "Check failed: " + throwable.getMessage(), Snackbar.LENGTH_LONG).show();
+                                },
+                                () -> {
+                                    // Account does not exist, proceed with sign up
+                                    performSignUp(name, email, password);
+                                }
+                        )
+        );
+    }
+
+    private void performSignUp(String name, String email, String password) {
         SharedPreferences prefs = getAuthPrefs();
-        String existingEmail = prefs.getString(LoginActivity.KEY_EMAIL, null);
-        if (existingEmail != null && existingEmail.equalsIgnoreCase(email)) {
-            binding.layoutEmail.setError("An account with this email already exists");
-            binding.layoutEmail.requestFocus();
-            return;
-        }
+        UserProfile profile = new UserProfile(name, email, HashUtils.hashPassword(password), "{}");
+        compositeDisposable.add(
+                SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
+                        .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                        .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+                        .subscribe(
+                                userId -> {
+                                    prefs.edit()
+                                            .putString(LoginActivity.KEY_NAME, name)
+                                            .putString(LoginActivity.KEY_EMAIL, email)
+                                            .putString(LoginActivity.KEY_PASSWORD, HashUtils.hashPassword(password))
+                                            .apply();
+                                    session.setLoggedIn(email, userId);
 
-        // Save new account with database UserProfile creation
-        UserProfile profile = new UserProfile(name, "{}");
-        SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
-                .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
-                .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
-                .subscribe(
-                        userId -> {
-                            prefs.edit()
-                                    .putString(LoginActivity.KEY_NAME, name)
-                                    .putString(LoginActivity.KEY_EMAIL, email)
-                                    .putString(LoginActivity.KEY_PASSWORD, HashUtils.hashPassword(password))
-                                    .putLong("logged_in_user_id", userId)
-                                    .putLong("user_id_" + email, userId)
-                                    .putBoolean(LoginActivity.KEY_LOGGED_IN, true)
-                                    .apply();
-
-                            Snackbar.make(binding.getRoot(), "Account created! Welcome, " + name + "!", Snackbar.LENGTH_SHORT).show();
-                            goToMain();
-                        },
-                        throwable -> {
-                            throwable.printStackTrace();
-                            Snackbar.make(binding.getRoot(), "Registration failed: " + throwable.getMessage(), Snackbar.LENGTH_LONG).show();
-                        }
-                );
+                                    Snackbar.make(binding.getRoot(), "Account created! Welcome, " + name + "!", Snackbar.LENGTH_SHORT).show();
+                                    goToMain();
+                                },
+                                throwable -> {
+                                    throwable.printStackTrace();
+                                    Snackbar.make(binding.getRoot(), "Registration failed: " + throwable.getMessage(), Snackbar.LENGTH_LONG).show();
+                                }
+                        )
+        );
     }
 
     // =========================================================================

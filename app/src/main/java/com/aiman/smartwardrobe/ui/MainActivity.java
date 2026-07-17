@@ -6,13 +6,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.aiman.smartwardrobe.R;
-import com.aiman.smartwardrobe.data.SmartWardrobeDatabase;
-import com.aiman.smartwardrobe.data.entity.UserProfile;
 import com.aiman.smartwardrobe.databinding.ActivityMainBinding;
 import com.aiman.smartwardrobe.ui.analytics.AnalyticsFragment;
 import com.aiman.smartwardrobe.ui.auth.ProfileFragment;
+import com.aiman.smartwardrobe.ui.auth.SessionManager;
 import com.aiman.smartwardrobe.ui.stylist.StylistFragment;
 import com.aiman.smartwardrobe.ui.wardrobe.WardrobeFragment;
+
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * ============================================================================
@@ -26,21 +27,21 @@ import com.aiman.smartwardrobe.ui.wardrobe.WardrobeFragment;
  * <ol>
  *   <li><b>Wardrobe (Module 1):</b> The Digital Inventory — a grid view
  *       of all clothing items with filtering capabilities.</li>
- *   <li><b>Stylist (Modules 2 & 3):</b> The Fit Stylist canvas for
- *       manual outfit composition and the Smart Stylist auto-generator.
- *       <i>(Placeholder — to be implemented in future modules.)</i></li>
+ *   <li><b>Stylist (Modules 2 &amp; 3):</b> The Fit Stylist canvas for
+ *       manual outfit composition and the Smart Stylist auto-generator.</li>
  *   <li><b>Analytics (Module 4):</b> The Analytics Dashboard with
- *       Cost-Per-Wear metrics and wardrobe insights.
- *       <i>(Placeholder — to be implemented in future modules.)</i></li>
+ *       Cost-Per-Wear metrics and wardrobe insights.</li>
+ *   <li><b>Profile:</b> User settings, notification preferences, and
+ *       account management.</li>
  * </ol>
  *
  * <p><b>Fragment Management:</b>
- * Each bottom navigation tab is associated with a Fragment. When the user
- * taps a tab, the current fragment is replaced with the corresponding
- * module's fragment. The {@code FragmentManager} handles the transaction.</p>
+ * Fragments are cached using show/hide transactions instead of replace.
+ * This preserves scroll position, loaded data, and ViewModel state when
+ * switching between tabs — eliminating unnecessary data reloads.</p>
  *
  * @author Aiman — Final Year Project
- * @version 1.0
+ * @version 1.1
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -52,6 +53,22 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
 
     // =========================================================================
+    // FRAGMENT CACHE (Fix #11 — avoid recreation on tab switch)
+    // =========================================================================
+
+    private Fragment wardrobeFragment;
+    private Fragment stylistFragment;
+    private Fragment analyticsFragment;
+    private Fragment profileFragment;
+    private Fragment activeFragment;
+
+    // =========================================================================
+    // RXJAVA DISPOSABLE MANAGEMENT (Fix #3 — prevent leaks)
+    // =========================================================================
+
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
+
+    // =========================================================================
     // ACTIVITY LIFECYCLE
     // =========================================================================
 
@@ -59,44 +76,58 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Ensure active user ID is initialized in SharedPreferences under all entry paths
-        android.content.SharedPreferences prefs = getSharedPreferences("smart_wardrobe_auth", MODE_PRIVATE);
-        if (prefs.getBoolean("is_logged_in", false)) {
-            long userId = prefs.getLong("logged_in_user_id", -1);
-            if (userId == -1) {
-                String email = prefs.getString("user_email", "user@email.com");
-                long storedUserId = prefs.getLong("user_id_" + email, -1);
-                if (storedUserId == -1) {
-                    String name = prefs.getString("user_name", "User");
-                    UserProfile profile = new UserProfile(name, "{}");
-                    SmartWardrobeDatabase.getInstance(getApplicationContext()).userProfileDao().insertProfile(profile)
-                            .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
-                            .subscribe(
-                                    newId -> {
-                                        prefs.edit()
-                                                .putLong("user_id_" + email, newId)
-                                                .putLong("logged_in_user_id", newId)
-                                                .apply();
-                                    },
-                                    Throwable::printStackTrace
-                            );
-                } else {
-                    prefs.edit().putLong("logged_in_user_id", storedUserId).apply();
-                }
-            }
+        // Ensure active user ID is initialized using the centralized SessionManager
+        SessionManager session = SessionManager.getInstance(this);
+        if (session.isLoggedIn()) {
+            compositeDisposable.add(
+                    session.ensureUserIdInitialized(null)
+            );
         }
 
         // Inflate the layout using ViewBinding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Initialize fragments on first launch
+        if (savedInstanceState == null) {
+            initializeFragments();
+        }
+
         // Set up the bottom navigation
         setupBottomNavigation();
+    }
 
-        // Load the default fragment (Wardrobe) on first launch
-        if (savedInstanceState == null) {
-            loadFragment(new WardrobeFragment());
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.clear();
+    }
+
+    // =========================================================================
+    // FRAGMENT INITIALIZATION
+    // =========================================================================
+
+    /**
+     * Creates all fragment instances and adds them to the FragmentManager.
+     * Only the wardrobe fragment is shown initially; all others are hidden.
+     *
+     * <p>This approach (add + show/hide) is more efficient than replace()
+     * because it preserves each fragment's view state and ViewModel when
+     * switching tabs.</p>
+     */
+    private void initializeFragments() {
+        wardrobeFragment = new WardrobeFragment();
+        stylistFragment = new StylistFragment();
+        analyticsFragment = new AnalyticsFragment();
+        profileFragment = new ProfileFragment();
+        activeFragment = wardrobeFragment;
+
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragment_container, profileFragment, "profile").hide(profileFragment)
+                .add(R.id.fragment_container, analyticsFragment, "analytics").hide(analyticsFragment)
+                .add(R.id.fragment_container, stylistFragment, "stylist").hide(stylistFragment)
+                .add(R.id.fragment_container, wardrobeFragment, "wardrobe")
+                .commit();
     }
 
     // =========================================================================
@@ -104,130 +135,37 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================================
 
     /**
-     * Configure the BottomNavigationView to switch fragments.
+     * Configure the BottomNavigationView to switch fragments using
+     * show/hide transactions instead of replace.
      *
      * <p>Each menu item in {@code bottom_nav_menu.xml} is mapped to a
-     * Fragment class. When the user taps a tab, the corresponding
-     * fragment is loaded into the container.</p>
+     * cached Fragment instance. When the user taps a tab, the current
+     * fragment is hidden and the target fragment is shown.</p>
      */
     private void setupBottomNavigation() {
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
-            Fragment fragment = null;
+            Fragment target = null;
             int itemId = item.getItemId();
 
             if (itemId == R.id.nav_wardrobe) {
-                // Module 1: Digital Inventory
-                fragment = new WardrobeFragment();
-
+                target = wardrobeFragment;
             } else if (itemId == R.id.nav_stylist) {
-                // Modules 2 & 3: Fit Stylist + Smart Stylist
-                fragment = new StylistFragment();
-
+                target = stylistFragment;
             } else if (itemId == R.id.nav_analytics) {
-                // Module 4: Analytics Dashboard
-                fragment = new AnalyticsFragment();
-
+                target = analyticsFragment;
             } else if (itemId == R.id.nav_profile) {
-                // Profile & Settings
-                fragment = new ProfileFragment();
+                target = profileFragment;
             }
 
-            if (fragment != null) {
-                loadFragment(fragment);
+            if (target != null && target != activeFragment) {
+                getSupportFragmentManager().beginTransaction()
+                        .hide(activeFragment)
+                        .show(target)
+                        .commit();
+                activeFragment = target;
                 return true;
             }
-            return false;
+            return target != null;
         });
-     }
-
-     /**
-      * Replace the current fragment in the container.
-      *
-      * @param fragment The fragment to display
-      */
-     private void loadFragment(Fragment fragment) {
-         getSupportFragmentManager()
-                 .beginTransaction()
-                 .replace(R.id.fragment_container, fragment)
-                 .commit();
-     }
-
-     // =========================================================================
-     // PLACEHOLDER FRAGMENT — For Future Modules
-     // =========================================================================
-
-     /**
-      * Temporary placeholder fragment for unimplemented modules.
-      * Displays a title and description message.
-      * Will be replaced with actual module fragments in future development.
-      */
-     public static class PlaceholderFragment extends Fragment {
-         private String title;
-         private String message;
-
-         /**
-          * Required empty public constructor for Fragment instantiation/recreation by the system.
-          */
-         public PlaceholderFragment() {
-         }
-
-         /**
-          * Factory method to construct the fragment with arguments.
-          *
-          * @param title   The screen title
-          * @param message The details message
-          * @return A configured PlaceholderFragment instance
-          */
-         public static PlaceholderFragment newInstance(String title, String message) {
-             PlaceholderFragment fragment = new PlaceholderFragment();
-             Bundle args = new Bundle();
-             args.putString("title", title);
-             args.putString("message", message);
-             fragment.setArguments(args);
-             return fragment;
-         }
-
-         @Override
-         public void onCreate(android.os.Bundle savedInstanceState) {
-             super.onCreate(savedInstanceState);
-             if (getArguments() != null) {
-                 title = getArguments().getString("title");
-                 message = getArguments().getString("message");
-             }
-         }
-
-         @Override
-         public android.view.View onCreateView(
-                 android.view.LayoutInflater inflater,
-                 android.view.ViewGroup container,
-                 Bundle savedInstanceState) {
-
-             // Simple placeholder layout created programmatically
-             android.widget.LinearLayout layout = new android.widget.LinearLayout(
-                     requireContext());
-             layout.setOrientation(android.widget.LinearLayout.VERTICAL);
-             layout.setGravity(android.view.Gravity.CENTER);
-             layout.setPadding(64, 64, 64, 64);
-
-             android.widget.TextView titleView = new android.widget.TextView(
-                     requireContext());
-             titleView.setText(title);
-             titleView.setTextSize(24);
-             titleView.setGravity(android.view.Gravity.CENTER);
-             titleView.setTextColor(getResources().getColor(
-                     com.google.android.material.R.color.material_on_surface_emphasis_high_type,
-                     requireContext().getTheme()));
-
-             android.widget.TextView messageView = new android.widget.TextView(
-                     requireContext());
-             messageView.setText(message);
-             messageView.setTextSize(16);
-             messageView.setGravity(android.view.Gravity.CENTER);
-             messageView.setPadding(0, 32, 0, 0);
-
-             layout.addView(titleView);
-             layout.addView(messageView);
-             return layout;
-         }
      }
 }

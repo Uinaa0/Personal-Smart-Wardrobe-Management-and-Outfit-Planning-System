@@ -317,6 +317,14 @@ public class WardrobeFragment extends Fragment
             rebuildFilterChips(viewModel.getCategories().getValue(), counts);
         });
 
+        // Observe errors and show Snackbar
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), errorMsg -> {
+            if (errorMsg != null && !errorMsg.isEmpty() && getView() != null) {
+                Snackbar.make(getView(), errorMsg, Snackbar.LENGTH_LONG).show();
+                viewModel.clearError();
+            }
+        });
+
         // Observe weather loading state
         viewModel.getIsWeatherLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (binding == null) return;

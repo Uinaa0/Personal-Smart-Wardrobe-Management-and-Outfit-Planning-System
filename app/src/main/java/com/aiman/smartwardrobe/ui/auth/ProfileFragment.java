@@ -22,6 +22,9 @@ import com.google.android.material.snackbar.Snackbar;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
+import com.aiman.smartwardrobe.data.SmartWardrobeDatabase;
+import com.aiman.smartwardrobe.data.entity.UserProfile;
+
 /**
  * ============================================================================
  * ProfileFragment — User Profile & Settings Screen
@@ -72,7 +75,7 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        repository = new WardrobeRepository(requireActivity().getApplication());
+        repository = WardrobeRepository.getInstance(requireActivity().getApplication());
 
         loadUserProfile();
         loadStats();
@@ -201,10 +204,33 @@ public class ProfileFragment extends Fragment {
                 .setPositiveButton("Save", (dialog, which) -> {
                     String newName = editText.getText().toString().trim();
                     if (!newName.isEmpty()) {
-                        prefs.edit().putString(LoginActivity.KEY_NAME, newName).apply();
-                        loadUserProfile();
-                        if (binding != null)
-                            Snackbar.make(binding.getRoot(), "Profile updated!", Snackbar.LENGTH_SHORT).show();
+                        long userId = SessionManager.getInstance(requireContext()).getLoggedInUserId();
+                        disposables.add(
+                            SmartWardrobeDatabase.getInstance(requireContext().getApplicationContext())
+                                .userProfileDao()
+                                .getUserById(userId)
+                                .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                                .flatMapCompletable(profile -> {
+                                    profile.setUsername(newName);
+                                    return SmartWardrobeDatabase.getInstance(requireContext().getApplicationContext())
+                                        .userProfileDao()
+                                        .updateProfile(profile);
+                                })
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(
+                                    () -> {
+                                        prefs.edit().putString(LoginActivity.KEY_NAME, newName).apply();
+                                        loadUserProfile();
+                                        if (binding != null)
+                                            Snackbar.make(binding.getRoot(), "Profile updated!", Snackbar.LENGTH_SHORT).show();
+                                    },
+                                    throwable -> {
+                                        throwable.printStackTrace();
+                                        if (binding != null)
+                                            Snackbar.make(binding.getRoot(), "Failed to update profile name", Snackbar.LENGTH_SHORT).show();
+                                    }
+                                )
+                        );
                     }
                 })
                 .setNegativeButton("Cancel", null)
@@ -325,7 +351,7 @@ public class ProfileFragment extends Fragment {
 
                     if (binding == null) return;
 
-                    if (!HashUtils.hashPassword(current).equals(stored)) {
+                    if (!HashUtils.verifyPassword(current, stored)) {
                         Snackbar.make(binding.getRoot(), "Current password is incorrect", Snackbar.LENGTH_SHORT).show();
                         return;
                     }
@@ -333,8 +359,30 @@ public class ProfileFragment extends Fragment {
                         Snackbar.make(binding.getRoot(), "New password must be at least 6 characters", Snackbar.LENGTH_SHORT).show();
                         return;
                     }
-                    prefs.edit().putString(LoginActivity.KEY_PASSWORD, HashUtils.hashPassword(newPwd)).apply();
-                    Snackbar.make(binding.getRoot(), "Password updated!", Snackbar.LENGTH_SHORT).show();
+                    long userId = SessionManager.getInstance(requireContext()).getLoggedInUserId();
+                    disposables.add(
+                        SmartWardrobeDatabase.getInstance(requireContext().getApplicationContext())
+                            .userProfileDao()
+                            .getUserById(userId)
+                            .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
+                            .flatMapCompletable(profile -> {
+                                profile.setPassword(HashUtils.hashPassword(newPwd));
+                                return SmartWardrobeDatabase.getInstance(requireContext().getApplicationContext())
+                                    .userProfileDao()
+                                    .updateProfile(profile);
+                            })
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(
+                                () -> {
+                                    prefs.edit().putString(LoginActivity.KEY_PASSWORD, HashUtils.hashPassword(newPwd)).apply();
+                                    Snackbar.make(binding.getRoot(), "Password updated!", Snackbar.LENGTH_SHORT).show();
+                                },
+                                throwable -> {
+                                    throwable.printStackTrace();
+                                    Snackbar.make(binding.getRoot(), "Failed to update password", Snackbar.LENGTH_SHORT).show();
+                                }
+                            )
+                    );
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -351,7 +399,7 @@ public class ProfileFragment extends Fragment {
 
     @SuppressWarnings("deprecation")
     private void performLogout() {
-        getAuthPrefs().edit().putBoolean(LoginActivity.KEY_LOGGED_IN, false).apply();
+        SessionManager.getInstance(requireContext()).logout();
         Intent intent = new Intent(requireActivity(), LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

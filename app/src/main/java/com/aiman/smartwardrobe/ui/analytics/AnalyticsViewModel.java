@@ -175,6 +175,7 @@ public class AnalyticsViewModel extends ViewModel {
         loadCategoryDistribution();
         loadMostWornItems();
         loadLeastWornItems();
+        loadAverageCpw();
         loadWearHistory();
     }
 
@@ -233,11 +234,7 @@ public class AnalyticsViewModel extends ViewModel {
         Disposable disposable = repository.getMostWornItems(TOP_ITEMS_LIMIT)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        items -> {
-                            mostWornItems.setValue(items);
-                            // Compute average CPW from most worn items
-                            computeAverageCpw(items);
-                        },
+                        items -> mostWornItems.setValue(items),
                         throwable -> {
                             throwable.printStackTrace();
                             mostWornItems.setValue(new ArrayList<>());
@@ -290,6 +287,27 @@ public class AnalyticsViewModel extends ViewModel {
     }
 
     /**
+     * Load average CPW from ALL wardrobe items (not just the top 5).
+     *
+     * <p>This was previously computed from only the 5 most-worn items,
+     * which gave a misleadingly low average. Now it queries every item
+     * with a LEFT JOIN to include unworn items (treated as infinite CPW
+     * and excluded from the average).</p>
+     */
+    private void loadAverageCpw() {
+        Disposable disposable = repository.getAllItemWearStats()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        this::computeAverageCpw,
+                        throwable -> {
+                            throwable.printStackTrace();
+                            averageCpw.setValue(0.0);
+                        }
+                );
+        compositeDisposable.add(disposable);
+    }
+
+    /**
      * Load the wear history log — a chronological list of wear events
      * with joined item metadata.
      */
@@ -337,7 +355,7 @@ public class AnalyticsViewModel extends ViewModel {
         @SuppressWarnings("unchecked")
         public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
             if (modelClass.isAssignableFrom(AnalyticsViewModel.class)) {
-                WardrobeRepository repository = new WardrobeRepository(application);
+                WardrobeRepository repository = WardrobeRepository.getInstance(application);
                 return (T) new AnalyticsViewModel(repository);
             }
             throw new IllegalArgumentException("Unknown ViewModel class: "

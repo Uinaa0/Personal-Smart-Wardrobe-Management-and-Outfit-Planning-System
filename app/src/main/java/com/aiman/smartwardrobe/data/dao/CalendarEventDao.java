@@ -179,6 +179,24 @@ public interface CalendarEventDao {
            "LIMIT :limit")
     Single<List<ItemWearStats>> getLeastWornItems(int limit, long userId);
 
+    /**
+     * Get wear stats for ALL wardrobe items (no limit).
+     *
+     * <p><b>Used for accurate Average CPW calculation:</b>
+     * Unlike getMostWornItems (which is capped at 5 items), this query
+     * returns stats for every item in the wardrobe, allowing the
+     * AnalyticsViewModel to compute a true average Cost-Per-Wear.</p>
+     *
+     * @return Single emitting wear stats for all items
+     */
+    @Query("SELECT w.item_id, w.category, w.color_hex, w.fabric_type, w.image_path, w.purchase_price, " +
+           "COUNT(c.event_id) AS wear_count " +
+           "FROM wardrobe_item w " +
+           "LEFT JOIN calendar_event c ON w.item_id = c.item_id " +
+           "WHERE w.user_id = :userId " +
+           "GROUP BY w.item_id")
+    Single<List<ItemWearStats>> getAllItemWearStats(long userId);
+
     // =========================================================================
     // WEAR HISTORY QUERY (Wear History Feature)
     // =========================================================================

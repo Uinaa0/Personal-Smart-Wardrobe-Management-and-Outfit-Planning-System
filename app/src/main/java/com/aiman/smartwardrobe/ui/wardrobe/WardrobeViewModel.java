@@ -118,6 +118,7 @@ public class WardrobeViewModel extends ViewModel {
     private SortOrder currentSortOrder = SortOrder.NEWEST;
     private boolean isFavoritesOnly = false;
     private final MutableLiveData<java.util.Map<String, Integer>> categoryCounts;
+    private final MutableLiveData<String> errorMessage;
 
     // =========================================================================
     // RXJAVA SUBSCRIPTION MANAGEMENT
@@ -159,6 +160,7 @@ public class WardrobeViewModel extends ViewModel {
         this.isWeatherLoading = new MutableLiveData<>(false);
         this.allowedCategoriesByWeather = new MutableLiveData<>(null);
         this.categoryCounts = new MutableLiveData<>(new java.util.HashMap<>());
+        this.errorMessage = new MutableLiveData<>(null);
         this.compositeDisposable = new CompositeDisposable();
 
         // Start observing data from the database
@@ -170,6 +172,14 @@ public class WardrobeViewModel extends ViewModel {
     // =========================================================================
     // PUBLIC API — LiveData Getters (Read-Only)
     // =========================================================================
+
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void clearError() {
+        errorMessage.setValue(null);
+    }
 
     /**
      * Get the observable list of wardrobe items.
@@ -273,7 +283,10 @@ public class WardrobeViewModel extends ViewModel {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         () -> { /* Database update triggers Flowable refresh */ },
-                        Throwable::printStackTrace
+                        throwable -> {
+                            throwable.printStackTrace();
+                            errorMessage.setValue("Failed to update favorite status");
+                        }
                 );
         compositeDisposable.add(disposable);
     }
@@ -313,8 +326,8 @@ public class WardrobeViewModel extends ViewModel {
                 .subscribe(
                         () -> { /* Success — Flowable auto-refreshes the list */ },
                         throwable -> {
-                            // Error handling — in production, show a Snackbar
                             throwable.printStackTrace();
+                            errorMessage.setValue("Failed to delete item: " + item.getFabricType() + " " + item.getCategory());
                         }
                 );
         compositeDisposable.add(disposable);
@@ -327,6 +340,7 @@ public class WardrobeViewModel extends ViewModel {
                         () -> { /* Success — Flowable auto-refreshes the list */ },
                         throwable -> {
                             throwable.printStackTrace();
+                            errorMessage.setValue("Failed to add item to wardrobe");
                         }
                 );
         compositeDisposable.add(disposable);
@@ -628,7 +642,7 @@ public class WardrobeViewModel extends ViewModel {
         @SuppressWarnings("unchecked")
         public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
             if (modelClass.isAssignableFrom(WardrobeViewModel.class)) {
-                WardrobeRepository repository = new WardrobeRepository(application);
+                WardrobeRepository repository = WardrobeRepository.getInstance(application);
                 return (T) new WardrobeViewModel(repository);
             }
             throw new IllegalArgumentException("Unknown ViewModel class: "
