@@ -159,16 +159,6 @@ public class StylistFragment extends Fragment {
             binding.buttonGenerateOutfit.setText(isLoading ? "Loading..." : "Auto Outfit");
         });
 
-        viewModel.getRecommendationAlert().observe(getViewLifecycleOwner(), alert -> {
-            if (alert != null && !alert.isEmpty()) {
-                binding.cardRecommendationStatus.setVisibility(View.VISIBLE);
-                binding.textRecommendationDetails.setText(alert);
-                String desc = viewModel.getWeatherDescription().getValue();
-                binding.textWeatherInfo.setText("Weather: " + (desc != null ? desc : "Unknown"));
-            } else {
-                binding.cardRecommendationStatus.setVisibility(View.GONE);
-            }
-        });
     }
 
     private void updateInfoPanelText() {

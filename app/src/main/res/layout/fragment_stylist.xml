@@ -348,63 +348,7 @@
 
                 </LinearLayout>
 
-                <!-- Dynamic Weather Recommendation Alert -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_recommendation_status"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="12dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="?attr/colorPrimaryContainer"
-                    app:cardBackgroundColor="?attr/colorPrimaryContainer"
-                    android:layout_marginTop="8dp"
-                    android:visibility="gone"
-                    tools:visibility="visible">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginBottom="4dp">
-
-                            <ImageView
-                                android:id="@+id/image_weather_icon"
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@drawable/ic_stylist"
-                                app:tint="?attr/colorOnPrimaryContainer"
-                                android:layout_marginEnd="6dp" />
-
-                            <TextView
-                                android:id="@+id/text_weather_info"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Weather: Loading..."
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:textColor="?attr/colorOnPrimaryContainer" />
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/text_recommendation_details"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Simulating styling suggestions..."
-                            android:textSize="11sp"
-                            android:textColor="?attr/colorOnPrimaryContainer"
-                            android:alpha="0.85" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
