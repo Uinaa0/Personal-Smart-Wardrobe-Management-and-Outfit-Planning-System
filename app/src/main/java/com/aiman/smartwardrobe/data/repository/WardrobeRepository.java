@@ -272,6 +272,7 @@ public class WardrobeRepository {
                 itemId,
                 System.currentTimeMillis() // Current timestamp
         );
+        event.setUserId(getLoggedInUserId());
         return calendarEventDao.insertEvent(event)
                 .subscribeOn(Schedulers.io());
     }
