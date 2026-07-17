@@ -339,7 +339,18 @@ public class WardrobeFragment extends Fragment
         viewModel.getCurrentTemperature().observe(getViewLifecycleOwner(), temp -> {
             if (binding == null) return;
             if (temp == null) {
-                binding.cardWeatherStatus.setVisibility(View.GONE);
+                binding.cardWeatherStatus.setVisibility(View.VISIBLE);
+                int surfaceVariant = getThemeColor(com.google.android.material.R.attr.colorSurfaceVariant);
+                int onSurfaceVariant = getThemeColor(com.google.android.material.R.attr.colorOnSurfaceVariant);
+
+                binding.cardWeatherStatus.setCardBackgroundColor(ColorStateList.valueOf(surfaceVariant));
+                binding.cardWeatherStatus.setStrokeColor(ColorStateList.valueOf(surfaceVariant));
+                binding.textWardrobeWeatherTitle.setTextColor(onSurfaceVariant);
+                binding.textWardrobeWeatherAlert.setTextColor(onSurfaceVariant);
+
+                binding.textWardrobeWeatherTitle.setText("Weather Filter: Off");
+                binding.textWardrobeWeatherAlert.setText("Tap here to simulate or fetch live weather.");
+                binding.imageWardrobeWeatherIcon.setImageTintList(ColorStateList.valueOf(onSurfaceVariant));
                 return;
             }
 
