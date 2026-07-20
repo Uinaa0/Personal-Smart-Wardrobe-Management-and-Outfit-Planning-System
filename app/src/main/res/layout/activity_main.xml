@@ -35,7 +35,6 @@
         app:itemPaddingBottom="2dp"
         app:itemIconSize="22dp"
         app:itemIconPadding="0dp"
-        app:itemActiveIndicatorHeight="28dp"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/bottom_nav_menu"
         app:elevation="8dp" />
