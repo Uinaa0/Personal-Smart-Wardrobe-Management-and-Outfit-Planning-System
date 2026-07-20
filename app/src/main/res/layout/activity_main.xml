@@ -31,10 +31,11 @@
         android:background="?attr/colorSurface"
         android:paddingTop="0dp"
         android:paddingBottom="0dp"
-        app:itemPaddingTop="4dp"
-        app:itemPaddingBottom="4dp"
+        app:itemPaddingTop="2dp"
+        app:itemPaddingBottom="2dp"
         app:itemIconSize="22dp"
         app:itemIconPadding="0dp"
+        app:itemActiveIndicatorHeight="28dp"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/bottom_nav_menu"
         app:elevation="8dp" />
