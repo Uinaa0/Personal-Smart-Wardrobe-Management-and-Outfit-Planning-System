@@ -18,7 +18,7 @@
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="?attr/actionBarSize" />
+        android:layout_marginBottom="@dimen/bottom_nav_height" />
 
     <!-- Bottom Navigation Bar — Material Design 3 Component
          Provides tab-based navigation between the 3 main modules.
@@ -26,7 +26,7 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/bottom_nav_height"
         android:layout_gravity="bottom"
         android:background="?attr/colorSurface"
         app:labelVisibilityMode="labeled"

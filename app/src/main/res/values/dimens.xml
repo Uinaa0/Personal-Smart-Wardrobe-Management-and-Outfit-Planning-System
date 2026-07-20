@@ -15,6 +15,12 @@
     <!-- Grid spacing between wardrobe item cards -->
     <dimen name="grid_spacing">8dp</dimen>
 
+    <!-- Compact toolbar height (smaller than default 56dp) -->
+    <dimen name="toolbar_height">44dp</dimen>
+
+    <!-- Compact bottom navigation height (smaller than default ~56dp) -->
+    <dimen name="bottom_nav_height">48dp</dimen>
+
     <!-- FAB margin from screen edges -->
     <dimen name="fab_margin">16dp</dimen>
 
