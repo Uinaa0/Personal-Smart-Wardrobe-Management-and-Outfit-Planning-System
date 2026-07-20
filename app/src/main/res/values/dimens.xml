@@ -19,7 +19,7 @@
     <dimen name="toolbar_height">44dp</dimen>
 
     <!-- Compact bottom navigation height (smaller than default ~56dp) -->
-    <dimen name="bottom_nav_height">48dp</dimen>
+    <dimen name="bottom_nav_height">52dp</dimen>
 
     <!-- FAB margin from screen edges -->
     <dimen name="fab_margin">16dp</dimen>
