@@ -16,10 +16,10 @@
     <dimen name="grid_spacing">8dp</dimen>
 
     <!-- Compact toolbar height (smaller than default 56dp) -->
-    <dimen name="toolbar_height">44dp</dimen>
+    <dimen name="toolbar_height">48dp</dimen>
 
-    <!-- Compact bottom navigation height (smaller than default ~56dp) -->
-    <dimen name="bottom_nav_height">52dp</dimen>
+    <!-- Compact bottom navigation height (slightly smaller than default ~80dp) -->
+    <dimen name="bottom_nav_height">68dp</dimen>
 
     <!-- FAB margin from screen edges -->
     <dimen name="fab_margin">16dp</dimen>
