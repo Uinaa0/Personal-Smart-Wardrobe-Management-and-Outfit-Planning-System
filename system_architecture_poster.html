@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Wardrobe — System Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #FFFFFF;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    color: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .container {
+    width: 1100px;
+    max-width: 100%;
+  }
+
+  /* ── Title ── */
+  .title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 32px;
+    font-weight: 400;
+  }
+
+  /* ── Layer Section ── */
+  .layer {
+    border-radius: 14px;
+    padding: 20px 24px 22px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .layer-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .layer-label .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Layer colors */
+  .layer-ui       { background: #EFF6FF; border: 1.5px solid #BFDBFE; }
+  .layer-ui .layer-label { color: #1E40AF; }
+  .layer-ui .dot  { background: #3B82F6; }
+
+  .layer-vm       { background: #FFF7ED; border: 1.5px solid #FED7AA; }
+  .layer-vm .layer-label { color: #C2410C; }
+  .layer-vm .dot  { background: #F97316; }
+
+  .layer-repo     { background: #F0FDF4; border: 1.5px solid #BBF7D0; }
+  .layer-repo .layer-label { color: #166534; }
+  .layer-repo .dot { background: #22C55E; }
+
+  .layer-data     { background: #FAFAFA; border: 1.5px solid #E5E7EB; }
+  .layer-data .layer-label { color: #374151; }
+  .layer-data .dot { background: #6B7280; }
+
+  /* ── Boxes ── */
+  .boxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .box {
+    background: #FFFFFF;
+    border: 1.5px solid #D1D5DB;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1f2937;
+    text-align: center;
+    min-width: 130px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: none;
+  }
+
+  .box-blue   { border-color: #93C5FD; background: #F0F7FF; color: #1E40AF; }
+  .box-orange { border-color: #FDBA74; background: #FFFBF5; color: #C2410C; }
+  .box-green  { border-color: #86EFAC; background: #F0FDF4; color: #166534; }
+  .box-purple { border-color: #C4B5FD; background: #FAF5FF; color: #5B21B6; }
+  .box-gray   { border-color: #D1D5DB; background: #F9FAFB; color: #374151; }
+
+  .box-small {
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    min-width: 110px;
+  }
+
+  /* ── MainActivity Composite Box ── */
+  .main-activity-wrapper {
+    background: #FFFFFF;
+    border: 2px solid #93C5FD;
+    border-radius: 12px;
+    padding: 14px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .main-activity-wrapper .ma-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1E40AF;
+  }
+  .main-activity-wrapper .ma-subtitle {
+    font-size: 10px;
+    font-weight: 500;
+    color: #6B7280;
+    margin-top: -6px;
+  }
+  .main-activity-wrapper .boxes {
+    gap: 8px;
+  }
+
+  /* ── Arrows between layers ── */
+  .arrow-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 4px 0;
+    gap: 12px;
+  }
+  .arrow-row svg {
+    display: block;
+  }
+  .arrow-label {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #9CA3AF;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+
+  /* ── Data Sources Split ── */
+  .data-split {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+  .data-section {
+    flex: 1;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .data-section.local {
+    background: #F0FDF4;
+    border: 1.5px solid #BBF7D0;
+  }
+  .data-section.remote {
+    background: #FAF5FF;
+    border: 1.5px solid #DDD6FE;
+  }
+  .data-section-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .data-section.local .data-section-title { color: #166534; }
+  .data-section.remote .data-section-title { color: #5B21B6; }
+
+  .data-section .boxes {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .dao-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* ── Entity Row ── */
+  .entity-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .entity-pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid;
+    background: #fff;
+  }
+  .entity-pill.green  { color: #166534; border-color: #86EFAC; }
+  .entity-pill.purple { color: #5B21B6; border-color: #C4B5FD; }
+
+  /* ── Small arrow inside remote section ── */
+  .inner-arrow {
+    margin: 8px 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ── DB Box ── */
+  .db-box {
+    background: #FFFFFF;
+    border: 2px solid #86EFAC;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .db-box-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #166534;
+    margin-bottom: 10px;
+  }
+  .db-icon { font-size: 14px; margin-right: 4px; }
+
+  /* ── Legend ── */
+  .legend {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #6B7280;
+  }
+  .legend-swatch {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    border: 1px solid #E5E7EB;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Title -->
+  <div class="title">Smart Wardrobe — System Architecture</div>
+  <div class="subtitle">MVVM + Repository Pattern  ·  Native Android (Java)  ·  Final Year Project</div>
+
+  <!-- ═══════════ LAYER 1: Presentation ═══════════ -->
+  <div class="layer layer-ui">
+    <div class="layer-label"><span class="dot"></span> Presentation Layer (UI)</div>
+    <div class="boxes">
+      <div class="box box-blue box-small">LoginActivity</div>
+      <div class="box box-blue box-small">SignUpActivity</div>
+
+      <div class="main-activity-wrapper">
+        <div class="ma-title">MainActivity</div>
+        <div class="ma-subtitle">BottomNavigationView (show / hide)</div>
+        <div class="boxes">
+          <div class="box box-blue box-small">📦 WardrobeFragment</div>
+          <div class="box box-blue box-small">👔 StylistFragment</div>
+          <div class="box box-blue box-small">📊 AnalyticsFragment</div>
+          <div class="box box-blue box-small">👤 ProfileFragment</div>
+        </div>
+      </div>
+
+      <div class="box box-blue box-small">AddItemActivity</div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-row">
+    <svg width="2" height="20"><line x1="1" y1="0" x2="1" y2="20" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
+    <span class="arrow-label">observes LiveData ↓</span>
+    <svg width="2" height="20"><line x1="1" y1="0" x2="1" y2="20" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
+  </div>
+
+  <!-- ═══════════ LAYER 2: ViewModel ═══════════ -->
+  <div class="layer layer-vm">
+    <div class="layer-label"><span class="dot"></span> ViewModel Layer</div>
+    <div class="boxes">
+      <div class="box box-orange">WardrobeViewModel</div>
+      <div class="box box-orange">StylistViewModel</div>
+      <div class="box box-orange">AnalyticsViewModel</div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-row">
+    <svg width="2" height="20"><line x1="1" y1="0" x2="1" y2="20" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
+    <span class="arrow-label">calls repository methods ↓</span>
+    <svg width="2" height="20"><line x1="1" y1="0" x2="1" y2="20" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
+  </div>
+
+  <!-- ═══════════ LAYER 3: Repository ═══════════ -->
+  <div class="layer layer-repo">
+    <div class="layer-label"><span class="dot"></span> Repository Layer (Business Logic + Threading)</div>
+    <div class="boxes">
+      <div class="box box-green" style="min-width: 340px;">WardrobeRepository<br><span style="font-size:10px; font-weight:400; color:#6B7280;">Single Source of Truth · RxJava Schedulers.io()</span></div>
+      <div class="box box-green">SessionManager<br><span style="font-size:10px; font-weight:400; color:#6B7280;">SharedPreferences</span></div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-row">
+    <svg width="2" height="20"><line x1="1" y1="0" x2="1" y2="20" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
+    <span class="arrow-label">delegates to data sources ↓</span>
+    <svg width="2" height="20"><line x1="1" y1="0" x2="1" y2="20" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
+  </div>
+
+  <!-- ═══════════ LAYER 4: Data Sources ═══════════ -->
+  <div class="layer layer-data">
+    <div class="layer-label"><span class="dot"></span> Data Sources</div>
+
+    <div class="data-split">
+
+      <!-- Local Database -->
+      <div class="data-section local">
+        <div class="data-section-title">🗄️ Local Database (Room / SQLite)</div>
+
+        <div class="db-box">
+          <div class="db-box-title">SmartWardrobeDatabase (v4)</div>
+          <div class="dao-grid">
+            <div class="box box-green box-small">WardrobeDao</div>
+            <div class="box box-green box-small">CalendarEventDao</div>
+            <div class="box box-green box-small">UserProfileDao</div>
+            <div class="box box-green box-small">StylingOntologyDao</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px; font-size: 10.5px; font-weight: 600; color: #166534; letter-spacing: 0.5px;">ENTITY TABLES</div>
+        <div class="entity-row">
+          <div class="entity-pill green">user_profile</div>
+          <div class="entity-pill green">wardrobe_item</div>
+          <div class="entity-pill green">calendar_event</div>
+          <div class="entity-pill green">styling_ontology</div>
+        </div>
+      </div>
+
+      <!-- Remote API -->
+      <div class="data-section remote">
+        <div class="data-section-title">🌐 Remote API (Retrofit 2 + OkHttp)</div>
+
+        <div class="box box-purple" style="margin: 0 auto;">RetrofitClient<br><span style="font-size:10px; font-weight:400; color:#7C3AED;">Singleton · Gson Converter</span></div>
+
+        <div class="inner-arrow">
+          <svg width="2" height="24"><line x1="1" y1="0" x2="1" y2="24" stroke="#A78BFA" stroke-width="1.5"/></svg>
+        </div>
+
+        <div class="box box-purple" style="margin: 0 auto;">WeatherApiService<br><span style="font-size:10px; font-weight:400; color:#7C3AED;">GET /weather</span></div>
+
+        <div class="inner-arrow">
+          <svg width="2" height="24"><line x1="1" y1="0" x2="1" y2="24" stroke="#A78BFA" stroke-width="1.5"/></svg>
+        </div>
+
+        <div class="box box-purple" style="margin: 0 auto; border-width: 2px; border-style: dashed;">☁️ OpenWeatherMap API<br><span style="font-size:10px; font-weight:400; color:#7C3AED;">External REST Service</span></div>
+
+        <div class="entity-row" style="margin-top: 12px;">
+          <div class="entity-pill purple">WeatherResponse</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════ Legend ═══════════ -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #EFF6FF; border-color: #BFDBFE;"></div>
+      Presentation (UI)
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #FFF7ED; border-color: #FED7AA;"></div>
+      ViewModel
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #F0FDF4; border-color: #BBF7D0;"></div>
+      Repository / Local DB
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #FAF5FF; border-color: #DDD6FE;"></div>
+      Remote API
+    </div>
+    <div class="legend-item">
+      <svg width="20" height="10"><line x1="0" y1="5" x2="20" y2="5" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="4,3"/></svg>
+      Data Flow
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
